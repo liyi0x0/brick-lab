@@ -5,8 +5,21 @@ import { getColor, type ColorKind } from '../core/colors';
  * 为积木材质注入逐实例的「高亮色」属性 aTint(rgb, 强度)。
  * 用于选中、悬停、删除预览等效果，无需拆分实例化网格。
  */
-function patchTint(mat: THREE.Material) {
+function patchTint(mat: THREE.Material, transAlpha = false) {
   mat.onBeforeCompile = (shader) => {
+    if (transAlpha) {
+      // 透明件：近乎无色（透明、烟灰）的更通透，鲜艳的透明色保持饱满，避免「透明」看起来像磨砂白
+      shader.fragmentShader = shader.fragmentShader.replace(
+        '#include <color_fragment>',
+        `#include <color_fragment>
+        #ifdef USE_COLOR
+          float tHi = max(max(vColor.r, vColor.g), vColor.b);
+          float tLo = min(min(vColor.r, vColor.g), vColor.b);
+          float tSat = tHi > 0.0 ? (tHi - tLo) / tHi : 0.0;
+          diffuseColor.a *= mix(0.5, 1.0, smoothstep(0.08, 0.5, tSat));
+        #endif`,
+      );
+    }
     shader.vertexShader = shader.vertexShader
       .replace('#include <common>', '#include <common>\nattribute vec4 aTint;\nvarying vec4 vTint;')
       .replace('#include <begin_vertex>', '#include <begin_vertex>\nvTint = aTint;');
@@ -26,7 +39,7 @@ function patchTint(mat: THREE.Material) {
         #include <tonemapping_fragment>`,
       );
   };
-  mat.customProgramCacheKey = () => 'brick-tint';
+  mat.customProgramCacheKey = () => (transAlpha ? 'brick-tint-trans' : 'brick-tint');
 }
 
 function makeSolid() {
@@ -73,7 +86,7 @@ export class BrickMaterials {
 
   constructor() {
     patchTint(this.solid);
-    patchTint(this.trans);
+    patchTint(this.trans, true);
     patchTint(this.metal);
   }
 
@@ -97,6 +110,10 @@ export function plainMaterial(colorId: number): THREE.MeshPhysicalMaterial {
   const c = getColor(colorId);
   m = c.kind === 'trans' ? makeTrans() : c.kind === 'metal' ? makeMetal() : makeSolid();
   m.color.set(c.hex);
+  if (c.kind === 'trans') {
+    const hsl = m.color.getHSL({ h: 0, s: 0, l: 0 });
+    if (hsl.s < 0.2) m.opacity = 0.28;
+  }
   plainCache.set(colorId, m);
   return m;
 }
