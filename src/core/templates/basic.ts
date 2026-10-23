@@ -1,214 +1,6 @@
-import { brickVoxels, getPart, rotateCell, topStudCells } from './parts';
-import { rotateGroup } from './placement';
-import type { BrickData, Rot } from './types';
-
-/** 示例作品：欢迎页与「示例作品」菜单中使用 */
-export interface Template {
-  id: string;
-  name: { zh: string; en: string };
-  description: { zh: string; en: string };
-  /** 底板尺寸，取 16 / 24 / 32 / 48 / 64 */
-  baseplateSize: number;
-  /** 底板颜色（LDraw 颜色代码） */
-  baseplateColor: number;
-  build: () => BrickData[];
-}
-
-// 常用颜色（LDraw 颜色代码）
-const C = {
-  white: 15,
-  lightGray: 71,
-  darkGray: 72,
-  black: 0,
-  red: 4,
-  darkRed: 320,
-  coral: 353,
-  orange: 25,
-  brightLightOrange: 191,
-  yellow: 14,
-  lime: 27,
-  brightGreen: 10,
-  green: 2,
-  darkGreen: 288,
-  azure: 322,
-  brightLightBlue: 212,
-  blue: 1,
-  mediumLavender: 30,
-  brightPink: 29,
-  tan: 19,
-  darkTan: 28,
-  reddishBrown: 70,
-  pearlGold: 297,
-  transClear: 47,
-  transRed: 36,
-  transOrange: 57,
-  transYellow: 46,
-  transLightBlue: 43,
-} as const;
-
-/** 可复现的伪随机数（mulberry32），保证示例每次生成都一样 */
-function rng(seed: number) {
-  let a = seed >>> 0;
-  return () => {
-    a = (a + 0x6d2b79f5) >>> 0;
-    let t = a;
-    t = Math.imul(t ^ (t >>> 15), t | 1);
-    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
-    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
-  };
-}
-
-const key = (x: number, y: number, z: number) => `${x},${y},${z}`;
-
-/**
- * 按搭建顺序逐块添加积木，并即时校验：
- * 不得重叠、不得低于地面或超出底板，且每块都必须扣在底板或已有积木的凸点上。
- */
-class Builder {
-  readonly bricks: BrickData[] = [];
-  private occupied = new Set<string>();
-  /** 凸点位置：key(x, 顶面所在层, z) */
-  private studs = new Set<string>();
-
-  constructor(private half: number) {}
-
-  /** (x, z) 列从 y 开始的 h 层是否都空着 */
-  isFree(x: number, y: number, z: number, h = 1): boolean {
-    for (let i = 0; i < h; i++) if (this.occupied.has(key(x, y + i, z))) return false;
-    return true;
-  }
-
-  add(part: string, color: number, x: number, y: number, z: number, rot: Rot = 0): this {
-    const brick: BrickData = { part, color, x, y, z, rot };
-    const voxels = brickVoxels(brick);
-    const where = `${part} @ (${x}, ${y}, ${z}) rot ${rot}`;
-    for (const [vx, vy, vz] of voxels) {
-      if (vy < 0) throw new Error(`低于地面：${where}`);
-      if (vx < -this.half || vx >= this.half || vz < -this.half || vz >= this.half) {
-        throw new Error(`超出底板：${where}`);
-      }
-      if (this.occupied.has(key(vx, vy, vz))) throw new Error(`与已有积木重叠：${where}`);
-    }
-    const supported = y === 0 || voxels.some(([vx, vy, vz]) => vy === y && this.studs.has(key(vx, y, vz)));
-    if (!supported) throw new Error(`悬空（没有扣在任何凸点上）：${where}`);
-    for (const [vx, vy, vz] of voxels) this.occupied.add(key(vx, vy, vz));
-    const p = getPart(part);
-    for (const [lx, lz] of topStudCells(p)) {
-      const [rx, rz] = rotateCell(lx, lz, p.w, p.d, rot);
-      this.studs.add(key(x + rx, y + p.h, z + rz));
-    }
-    this.bricks.push(brick);
-    return this;
-  }
-}
-
-/** 把长度 n 拆成不超过 4 的几段；offset 时先放一段 2，让上下层接缝错开 */
-function splitRun(n: number, offset: boolean): number[] {
-  const out: number[] = [];
-  let rem = n;
-  if (offset && rem > 2) {
-    out.push(2);
-    rem -= 2;
-  }
-  while (rem > 0) {
-    const piece = rem >= 6 ? 4 : rem === 5 ? 3 : rem;
-    out.push(piece);
-    rem -= piece;
-  }
-  return out;
-}
-
-/** 把一串（可不连续的）格子位置分成连续段 */
-function runs(positions: number[]): [number, number][] {
-  const out: [number, number][] = [];
-  const sorted = [...positions].sort((a, b) => a - b);
-  for (const p of sorted) {
-    const last = out[out.length - 1];
-    if (last && last[1] === p) last[1] = p + 1;
-    else out.push([p, p + 1]);
-  }
-  return out;
-}
-
-/** 沿 x 或 z 方向，用 1×N 砖填满给定格子（同一行 / 列） */
-function placeLine(
-  b: Builder,
-  positions: number[],
-  fixed: number,
-  y: number,
-  dir: 'x' | 'z',
-  offset: boolean,
-  color: () => number,
-) {
-  for (const [s, e] of runs(positions)) {
-    let p = s;
-    for (const len of splitRun(e - s, offset)) {
-      const part = `brick-1x${len}`;
-      if (dir === 'x') b.add(part, color(), p, y, fixed, 0);
-      else b.add(part, color(), fixed, y, p, 1);
-      p += len;
-    }
-  }
-}
-
-/**
- * 一圈 1 格厚的墙（一层砖高）。偶数层由前后墙占用四角、奇数层由左右墙占用，
- * 使转角相互咬合；open 返回 true 的格子留空，已被占用的格子自动跳过。
- */
-function wallRing(
-  b: Builder,
-  x0: number,
-  z0: number,
-  x1: number,
-  z1: number,
-  y: number,
-  layer: number,
-  color: () => number,
-  open: (x: number, z: number) => boolean = () => false,
-) {
-  const rowsOwnCorners = layer % 2 === 0;
-  const offset = layer % 2 === 1;
-  const free = (x: number, z: number) => !open(x, z) && b.isFree(x, y, z, 3);
-  for (const z of [z0, z1 - 1]) {
-    const xs: number[] = [];
-    for (let x = rowsOwnCorners ? x0 : x0 + 1; x < (rowsOwnCorners ? x1 : x1 - 1); x++) if (free(x, z)) xs.push(x);
-    placeLine(b, xs, z, y, 'x', offset, color);
-  }
-  for (const x of [x0, x1 - 1]) {
-    const zs: number[] = [];
-    for (let z = rowsOwnCorners ? z0 + 1 : z0; z < (rowsOwnCorners ? z1 - 1 : z1); z++) if (free(x, z)) zs.push(z);
-    placeLine(b, zs, x, y, 'z', offset, color);
-  }
-}
-
-/** 用 2×N 砖填满一条 2 格宽的带：along='x' 时占 x∈[s,e)、z∈[c,c+2) */
-function band2(b: Builder, along: 'x' | 'z', s: number, e: number, c: number, y: number, color: number, offset: boolean) {
-  let p = s;
-  for (const len of splitRun(e - s, offset)) {
-    const part = len === 1 ? 'brick-1x2' : `brick-2x${len}`;
-    if (along === 'x') b.add(part, color, p, y, c, len === 1 ? 1 : 0);
-    else b.add(part, color, c, y, p, len === 1 ? 0 : 1);
-    p += len;
-  }
-}
-
-/** 一层由 4 块转角砖拼成的 4×4「八角」圆盘，中心在格点 (cx, cz) */
-function octagon(b: Builder, cx: number, cz: number, y: number, color: number) {
-  b.add('corner-brick-2x2', color, cx, y, cz, 0);
-  b.add('corner-brick-2x2', color, cx, y, cz - 2, 1);
-  b.add('corner-brick-2x2', color, cx - 2, y, cz - 2, 2);
-  b.add('corner-brick-2x2', color, cx - 2, y, cz, 3);
-}
-
-/** 一棵圆润的小树，树干中心在格点 (cx, cz) */
-function tree(b: Builder, cx: number, cz: number) {
-  b.add('round-brick-2x2', C.reddishBrown, cx - 1, 0, cz - 1);
-  b.add('round-brick-2x2', C.reddishBrown, cx - 1, 3, cz - 1);
-  octagon(b, cx, cz, 6, C.darkGreen);
-  octagon(b, cx, cz, 9, C.green);
-  b.add('round-brick-2x2', C.brightGreen, cx - 1, 12, cz - 1);
-  b.add('round-plate-2x2', C.lime, cx - 1, 15, cz - 1);
-}
+import { rotateGroup } from '../placement';
+import type { BrickData } from '../types';
+import { band2, Builder, C, rng, tree, wallRing, type Template } from './builder';
 
 // ---------------------------------------------------------------------------
 // 1. 温馨小屋
@@ -664,9 +456,11 @@ function pyramid(): BrickData[] {
   return b.bricks;
 }
 
-export const TEMPLATES: Template[] = [
+/** 最初的 6 个示例 */
+export const BASIC_TEMPLATES: Template[] = [
   {
     id: 'cottage',
+    level: 2,
     name: { zh: '温馨小屋', en: 'Cosy Cottage' },
     description: {
       zh: '白墙红顶的小房子，有拱门、透明窗户、烟囱和院子里的树。',
@@ -678,6 +472,7 @@ export const TEMPLATES: Template[] = [
   },
   {
     id: 'airplane',
+    level: 1,
     name: { zh: '红色小飞机', en: 'Red Airplane' },
     description: {
       zh: '停在跑道上的螺旋桨小飞机，带透明挡风玻璃和尾翼。',
@@ -689,6 +484,7 @@ export const TEMPLATES: Template[] = [
   },
   {
     id: 'castle',
+    level: 2,
     name: { zh: '城堡塔楼', en: 'Castle Tower' },
     description: {
       zh: '石砌塔楼，配有拱门、箭窗、垛口、烽火台和护城河吊桥。',
@@ -700,6 +496,7 @@ export const TEMPLATES: Template[] = [
   },
   {
     id: 'rocket',
+    level: 2,
     name: { zh: '火箭发射台', en: 'Rocket Launch' },
     description: {
       zh: '整装待发的火箭，旁边是发射塔、燃料罐和指挥室。',
@@ -711,6 +508,7 @@ export const TEMPLATES: Template[] = [
   },
   {
     id: 'heart',
+    level: 1,
     name: { zh: '像素爱心', en: 'Pixel Heart' },
     description: {
       zh: '用平滑板拼成的像素画，装在木质相框里。',
@@ -722,6 +520,7 @@ export const TEMPLATES: Template[] = [
   },
   {
     id: 'pyramid',
+    level: 1,
     name: { zh: '彩虹金字塔', en: 'Rainbow Pyramid' },
     description: {
       zh: '七种颜色层层堆叠的阶梯金字塔，顶上镶着金色宝石。',

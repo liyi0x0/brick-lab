@@ -35,6 +35,8 @@ export default defineConfig(({ mode }) => {
     test: {
       environment: 'node',
       include: ['tests/**/*.test.ts'],
+      // 大型示例作品的体素雕刻较慢
+      testTimeout: 30_000,
     },
   };
 });
