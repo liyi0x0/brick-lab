@@ -443,9 +443,19 @@ export class Engine {
     this.invalidate();
   }
 
-  /** 选区的描边与折角框 */
+  private selKey: { ids: number[] | null; version: number; hidden: boolean; playback: boolean } = {
+    ids: null,
+    version: -1,
+    hidden: false,
+    playback: false,
+  };
+
+  /** 选区的描边与折角框（仅在选择或模型变化时重建） */
   updateSelectionBox() {
     const ids = useStore.getState().selection;
+    const k = this.selKey;
+    if (k.ids === ids && k.version === model.version && k.hidden === this.hideSelectionBox && k.playback === this.isPlayback) return;
+    this.selKey = { ids, version: model.version, hidden: this.hideSelectionBox, playback: this.isPlayback };
     if (!ids.length || this.hideSelectionBox || this.isPlayback) {
       this.selectionBox.update(null);
       this.outline.update([]);
