@@ -1,0 +1,30 @@
+@import 'tailwindcss';
+
+html,
+body,
+#root {
+  height: 100%;
+  margin: 0;
+  overflow: hidden;
+}
+
+body {
+  background: linear-gradient(180deg, #f4f6fa 0%, #dfe5ee 100%);
+  font-family: -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', 'Segoe UI', sans-serif;
+}
+
+.viewport-canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+  touch-action: none;
+  outline: none;
+}
+
+.marquee {
+  position: absolute;
+  border: 1.5px solid #2f6bff;
+  background: rgba(47, 107, 255, 0.1);
+  border-radius: 4px;
+  pointer-events: none;
+}

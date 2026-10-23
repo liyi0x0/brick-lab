@@ -193,19 +193,20 @@ export interface PlacementContext {
 }
 
 /**
- * 根据拾取结果计算新积木的位置：
- * - 命中顶面 / 底板：放在其上，积木中心对准光标；若与其它积木冲突则向上抬升
+ * 通用放置计算（按包围盒 fw×fd×h）：
+ * - 命中顶面 / 底板：放在其上，中心对准光标；若冲突则向上抬升
  * - 命中侧面：贴着该面放置，底部与被命中积木对齐
  * - 命中底面：挂在下方
+ * collides(x, y, z) 判断以 (x, y, z) 为最小角时是否冲突。
  */
-export function computePlacement(
+export function computeBoxPlacement(
   ctx: PlacementContext,
-  partId: string,
-  rot: Rot,
+  fw: number,
+  fd: number,
+  h: number,
   hit: PickHit,
+  collides: (x: number, y: number, z: number) => boolean,
 ): PlacementResult {
-  const part = getPart(partId);
-  const [fw, fd] = rotatedSize(part, rot);
   const [nx, ny, nz] = hit.normal;
   const [px, , pz] = hit.point;
   const [cx, cy, cz] = hit.cell;
@@ -217,13 +218,12 @@ export function computePlacement(
   if (ny === 1) {
     y = hit.brickId === null ? 0 : cy + 1;
     if (hit.brickId === null) {
-      // 限制在底板内
-      const h = ctx.groundHalf;
-      x = clamp(x, -h, h - fw);
-      z = clamp(z, -h, h - fd);
+      const g = ctx.groundHalf;
+      if (fw <= g * 2) x = clamp(x, -g, g - fw);
+      if (fd <= g * 2) z = clamp(z, -g, g - fd);
     }
   } else if (ny === -1) {
-    y = cy - part.h;
+    y = cy - h;
   } else {
     const hb = hit.brickId !== null ? ctx.getBrick(hit.brickId) : undefined;
     y = hb ? hb.y : cy;
@@ -233,16 +233,48 @@ export function computePlacement(
     else if (nz === -1) z = cz - fd;
   }
 
-  const probe = { part: partId, rot, x, y, z };
   if (y < 0) return { x, y, z, valid: false };
-  if (!ctx.grid.collides(brickVoxels(probe), ctx.ignore)) return { x, y, z, valid: true };
+  if (!collides(x, y, z)) return { x, y, z, valid: true };
   if (lift) {
     for (let yy = y + 1; yy < MAX_LEVEL; yy++) {
-      probe.y = yy;
-      if (!ctx.grid.collides(brickVoxels(probe), ctx.ignore)) return { x, y: yy, z, valid: true };
+      if (!collides(x, yy, z)) return { x, y: yy, z, valid: true };
     }
   }
   return { x, y, z, valid: false };
+}
+
+/** 单块积木的放置 */
+export function computePlacement(
+  ctx: PlacementContext,
+  partId: string,
+  rot: Rot,
+  hit: PickHit,
+): PlacementResult {
+  const part = getPart(partId);
+  const [fw, fd] = rotatedSize(part, rot);
+  const probe = { part: partId, rot, x: 0, y: 0, z: 0 };
+  return computeBoxPlacement(ctx, fw, fd, part.h, hit, (x, y, z) => {
+    probe.x = x;
+    probe.y = y;
+    probe.z = z;
+    return ctx.grid.collides(brickVoxels(probe), ctx.ignore);
+  });
+}
+
+/**
+ * 一组积木（粘贴）的放置：以组合包围盒为整体对准光标。
+ * 返回相对原始坐标的位移。
+ */
+export function computeGroupPlacement(
+  ctx: PlacementContext,
+  bricks: Pick<Brick, 'part' | 'x' | 'y' | 'z' | 'rot'>[],
+  hit: PickHit,
+): { dx: number; dy: number; dz: number; valid: boolean } {
+  const b = groupBounds(bricks);
+  const r = computeBoxPlacement(ctx, b.x1 - b.x0, b.z1 - b.z0, b.y1 - b.y0, hit, (x, y, z) =>
+    !groupFits(ctx.grid, bricks, x - b.x0, y - b.y0, z - b.z0, ctx.ignore),
+  );
+  return { dx: r.x - b.x0, dy: r.y - b.y0, dz: r.z - b.z0, valid: r.valid };
 }
 
 /** 四舍五入并消除 -0 */
