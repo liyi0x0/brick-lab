@@ -10,7 +10,7 @@ async function shoot(file, { width, height, dpr = 1, scheme = 'light', template,
   await page.goto(url, { waitUntil: 'networkidle' });
   await page.waitForTimeout(600);
   await page.evaluate(async (template) => {
-    const { TEMPLATES } = await import('/src/core/templates.ts');
+    const { TEMPLATES, buildTemplate } = await import('/src/core/templates/index.ts');
     const tpl = TEMPLATES.find((t) => t.id === template);
     window.__store.getState().openDialog(null);
     if (tpl) {
@@ -18,7 +18,7 @@ async function shoot(file, { width, height, dpr = 1, scheme = 'light', template,
         name: tpl.name.zh,
         baseplateSize: tpl.baseplateSize,
         baseplateColor: tpl.baseplateColor,
-        bricks: tpl.build(),
+        bricks: buildTemplate(tpl),
       });
     }
   }, template);
@@ -69,6 +69,18 @@ await shoot('playback.jpg', {
     for (let i = 0; i < 28; i++) await page.keyboard.press('ArrowLeft');
     await page.keyboard.press('ArrowRight');
     await page.waitForTimeout(160);
+  },
+});
+// 示例作品：欢迎页「挑战」筛选
+await shoot('presets.jpg', {
+  width: 1440,
+  height: 900,
+  template: 'cottage',
+  setup: async (page) => {
+    await page.evaluate(() => window.__store.getState().openDialog('welcome'));
+    await page.waitForTimeout(300);
+    await page.locator('[role=dialog] button', { hasText: '挑战' }).first().click();
+    await page.waitForTimeout(2600);
   },
 });
 // 手机
