@@ -33,7 +33,8 @@
     "test:watch": "vitest",
     "e2e": "node scripts/e2e.mjs && node scripts/e2e-io.mjs && node scripts/e2e-regressions.mjs",
     "shot": "node scripts/shot.mjs",
-    "build:single": "node scripts/build-single.mjs"
+    "build:single": "node scripts/build-single.mjs",
+    "e2e:mobile": "node scripts/mobile-audit.mjs"
   },
   "dependencies": {
     "idb-keyval": "^6.3.0",

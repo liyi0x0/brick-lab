@@ -349,7 +349,7 @@ export class Interaction {
         this.placeBrick(hit);
         break;
       case 'select':
-        this.selectClick(hit, e.shiftKey || e.metaKey || e.ctrlKey);
+        this.selectClick(hit, e.shiftKey || e.metaKey || e.ctrlKey, e.pointerType !== 'mouse');
         break;
       case 'paint':
         this.paint(hit);
@@ -388,21 +388,26 @@ export class Interaction {
     if (added) useStore.getState().setSelection(added.map((b) => b.id));
   }
 
-  private selectClick(hit: PickHit | null, additive: boolean) {
+  /**
+   * 选择工具的点选。
+   * 触屏没有 Shift：已有选择时，轻点其它积木即追加 / 取消，轻点空白处清空选择。
+   */
+  private selectClick(hit: PickHit | null, modifier: boolean, touch = false) {
     const st = useStore.getState();
     if (!hit || hit.brickId === null) {
-      if (!additive && st.selection.length) st.setSelection([]);
+      if ((touch || !modifier) && st.selection.length) st.setSelection([]);
       return;
     }
     const id = hit.brickId;
     // 双击：选择相连的整组积木
     const now = performance.now();
-    if (!additive && this.lastClick.id === id && now - this.lastClick.time < 360) {
+    if (!modifier && this.lastClick.id === id && now - this.lastClick.time < 360) {
       this.lastClick = { time: 0, id: -1 };
       selectConnected(id);
       return;
     }
     this.lastClick = { time: now, id };
+    const additive = modifier || (touch && st.selection.length > 0);
     if (additive) {
       st.setSelection(st.selection.includes(id) ? st.selection.filter((x) => x !== id) : [...st.selection, id]);
     } else {

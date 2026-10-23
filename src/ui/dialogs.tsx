@@ -7,6 +7,7 @@ import {
   FileBraces,
   FileSpreadsheet,
   FolderOpen,
+  Hand,
   Image,
   Keyboard,
   Link,
@@ -48,6 +49,7 @@ import {
 } from '../state/persistence';
 import { model, useStore, type Lang, type Quality, type Theme } from '../state/store';
 import { askConfirm, askText } from './ConfirmDialog';
+import { useTouchDevice } from './device';
 import { Swatch } from './PartsPanel';
 import { Button, cx, Dialog, IconButton, Kbd, keyLabel, Segmented, Switch } from './primitives';
 
@@ -75,6 +77,14 @@ export function HelpDialog() {
     ['help.dbl', 'help.dbl.desc'],
     ['help.long', 'help.long.desc'],
   ] as [TKey, TKey][];
+  const touch = useTouchDevice();
+  const gestures: [TKey, TKey][] = [
+    ['help.t.tap', 'help.t.tap.desc'],
+    ['help.t.drag', 'help.t.drag.desc'],
+    ['help.t.pinch', 'help.t.pinch.desc'],
+    ['help.t.long', 'help.t.long.desc'],
+    ['help.t.multi', 'help.t.multi.desc'],
+  ];
   const keys: [string[], TKey][] = [
     [['B', 'V', 'P', 'E'], 'help.k.tools'],
     [['R'], 'help.k.rotate'],
@@ -94,17 +104,17 @@ export function HelpDialog() {
       <div className="grid gap-6 md:grid-cols-2">
         <section>
           <h3 className="mb-2 flex items-center gap-2 text-[12px] font-semibold tracking-wide text-ink-2">
-            <Mouse size={15} /> {t('help.mouse')}
+            {touch ? <Hand size={15} /> : <Mouse size={15} />} {t(touch ? 'help.touchTitle' : 'help.mouse')}
           </h3>
           <div className="flex flex-col divide-y divide-line rounded-2xl border border-line">
-            {mouse.map(([k, d]) => (
+            {(touch ? gestures : (mouse as [TKey, TKey][])).map(([k, d]) => (
               <div key={k} className="flex items-center gap-3 px-3.5 py-2.5">
-                <span className="w-[92px] shrink-0 text-[13px] font-medium">{t(k as TKey)}</span>
+                <span className="w-[92px] shrink-0 text-[13px] font-medium">{t(k)}</span>
                 <span className="text-[12.5px] leading-snug text-ink-2">{t(d)}</span>
               </div>
             ))}
           </div>
-          <p className="mt-3 rounded-xl bg-panel-2 px-3.5 py-2.5 text-[12px] leading-relaxed text-ink-2">📱 {t('help.touch')}</p>
+          {!touch && <p className="mt-3 rounded-xl bg-panel-2 px-3.5 py-2.5 text-[12px] leading-relaxed text-ink-2">📱 {t('help.touch')}</p>}
         </section>
         <section>
           <h3 className="mb-2 flex items-center gap-2 text-[12px] font-semibold tracking-wide text-ink-2">
@@ -288,7 +298,7 @@ export function ExportDialog() {
             readOnly
             value={link}
             onFocus={(e) => e.target.select()}
-            className="h-9 min-w-0 flex-1 rounded-xl border border-line-2 bg-panel-solid px-3 font-mono text-[12px] text-ink-2 outline-none"
+            className="h-9 min-w-0 flex-1 rounded-xl border border-line-2 bg-panel-solid px-3 font-mono text-[16px] text-ink-2 outline-none md:text-[12px]"
           />
           <Button variant="primary" onClick={copy} icon={copied ? <Check size={15} /> : <Copy size={15} />} disabled={!link}>
             {copied ? '✓' : t('action.copy')}

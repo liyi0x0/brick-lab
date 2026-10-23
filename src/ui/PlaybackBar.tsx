@@ -98,10 +98,19 @@ function Player() {
     <div className="pointer-events-none edge-b absolute inset-x-0 z-20 flex justify-center px-4">
       <div className="glass anim-up pointer-events-auto flex w-full max-w-[640px] flex-col gap-2 rounded-[22px] px-4 pt-3 pb-2.5">
         <div className="flex items-center gap-3">
-          <span className="text-[13px] font-semibold">{t('playback.title')}</span>
-          <span className="text-[12px] text-ink-3 tabular-nums">{t('playback.step', { i: step, n })}</span>
+          <span className="hidden text-[13px] font-semibold whitespace-nowrap sm:inline">{t('playback.title')}</span>
+          <span className="text-[12px] whitespace-nowrap text-ink-3 tabular-nums">{t('playback.step', { i: step, n })}</span>
           <div className="flex-1" />
-          <div className="flex rounded-lg bg-panel-2 p-0.5">
+          {/* 手机上只放一个按钮，轻点循环切换速度 */}
+          <button
+            type="button"
+            onClick={() => setSpeed(SPEEDS[(SPEEDS.indexOf(speed) + 1) % SPEEDS.length])}
+            className="h-7 min-w-[44px] rounded-lg bg-panel-2 px-2 font-mono text-[12px] text-ink sm:hidden"
+            aria-label={t('playback.speed')}
+          >
+            {speed}×
+          </button>
+          <div className="hidden rounded-lg bg-panel-2 p-0.5 sm:flex">
             {SPEEDS.map((s) => (
               <button
                 key={s}

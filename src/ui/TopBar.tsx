@@ -4,17 +4,20 @@ import {
   Ellipsis,
   FileUp,
   FolderOpen,
+  House,
+  ListChecks,
   CircleQuestionMark,
   Plus,
   Redo2,
   Settings,
   Share2,
   Sparkles,
+  SquareDashedMousePointer,
   Trash,
   Undo2,
 } from 'lucide-react';
 import { useT } from '../i18n';
-import { clearAll, newProject, pickFile, redo, undo } from '../state/actions';
+import { clearAll, newProject, pickFile, redo, selectAll, setView, undo } from '../state/actions';
 import { flushSave } from '../state/persistence';
 import { model, useStore } from '../state/store';
 import { askConfirm } from './ConfirmDialog';
@@ -47,7 +50,7 @@ function ProjectName() {
           e.stopPropagation();
         }}
         aria-label={t('project.rename')}
-        className="h-8 w-[180px] rounded-lg border border-accent bg-panel-solid px-2 text-[13px] font-medium text-ink outline-none sm:w-[220px]"
+        className="h-8 w-[180px] rounded-lg border border-accent bg-panel-solid px-2 text-[16px] font-medium text-ink outline-none sm:w-[220px] md:text-[13px]"
       />
     );
   }
@@ -99,6 +102,10 @@ export function TopBar() {
     { label: t('menu.import'), icon: <FileUp size={16} />, shortcut: 'Mod+O', onClick: pickFile },
     { label: t('menu.library'), icon: <FolderOpen size={16} />, onClick: () => openDialog('library') },
     { label: t('menu.templates'), icon: <Sparkles size={16} />, onClick: () => openDialog('welcome') },
+    { divider: true, label: '' },
+    { label: t('menu.partsList'), icon: <ListChecks size={16} />, onClick: () => useStore.getState().setUI({ bomOpen: true }) },
+    { label: t('action.selectAll'), icon: <SquareDashedMousePointer size={16} />, shortcut: 'Mod+A', onClick: selectAll },
+    { label: t('menu.resetView'), icon: <House size={16} />, shortcut: 'H', onClick: () => setView('home') },
     { divider: true, label: '' },
     { label: t('menu.instructions'), icon: <Clapperboard size={16} />, onClick: startPlayback },
     { label: t('menu.settings'), icon: <Settings size={16} />, onClick: () => openDialog('settings') },

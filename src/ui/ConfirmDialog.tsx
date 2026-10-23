@@ -86,7 +86,7 @@ export function ConfirmDialog() {
             value={value}
             maxLength={60}
             onChange={(e) => setValue(e.target.value)}
-            className="mt-3 h-10 w-full rounded-xl border border-line-2 bg-panel-2 px-3 text-[14px] text-ink outline-none focus:border-accent"
+            className="mt-3 h-10 w-full rounded-xl border border-line-2 bg-panel-2 px-3 text-[16px] text-ink outline-none focus:border-accent md:text-[14px]"
           />
         )}
         <div className="mt-5 flex justify-end gap-2">

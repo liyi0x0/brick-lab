@@ -45,7 +45,7 @@ function PartGrid({ query, cat }: { query: string; cat: 'all' | PartCategory }) 
 
   if (!parts.length) return <div className="px-2 py-10 text-center text-[12px] text-ink-3">{t('panel.noResult')}</div>;
   return (
-    <div className="grid grid-cols-3 gap-1.5">
+    <div className="grid grid-cols-[repeat(auto-fill,minmax(84px,1fr))] gap-1.5">
       {parts.map((p) => {
         const active = p.id === partId;
         return (
@@ -202,7 +202,7 @@ function SearchBox({ value, onChange }: { value: string; onChange: (v: string) =
           e.stopPropagation();
         }}
         placeholder={t('panel.search')}
-        className="min-w-0 flex-1 bg-transparent text-[13px] text-ink outline-none placeholder:text-ink-3"
+        className="min-w-0 flex-1 bg-transparent text-[16px] text-ink outline-none placeholder:text-ink-3 md:text-[13px]"
       />
       {value && (
         <button type="button" onClick={() => onChange('')} className="text-ink-3 hover:text-ink" aria-label="clear">
@@ -250,7 +250,7 @@ export function MobileSheet() {
   return (
     <div className="fixed inset-0 z-30 md:hidden">
       <div className="anim-fade absolute inset-0 bg-[var(--backdrop)]" onClick={() => setUI({ mobileSheet: null })} />
-      <div className="anim-up absolute inset-x-0 bottom-0 flex max-h-[62vh] flex-col rounded-t-[24px] border-t border-line bg-panel-solid pb-[env(safe-area-inset-bottom)] shadow-pop">
+      <div className="anim-up absolute inset-x-0 bottom-0 flex max-h-[62vh] flex-col rounded-t-[24px] border-t border-line bg-panel-solid pb-[env(safe-area-inset-bottom)] shadow-pop [@media(max-height:500px)]:max-h-[94vh]">
         <div className="mx-auto mt-2 h-1 w-10 rounded-full bg-line-2" />
         <div className="flex items-center gap-2 px-4 pt-2 pb-2">
           {(['parts', 'colors'] as const).map((k) => (

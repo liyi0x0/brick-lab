@@ -8,6 +8,7 @@ import type { Brick, Rot, Tool } from '../core/types';
 import type { ViewPreset } from '../engine/Engine';
 import { sound } from '../engine/sound';
 import { tr, type TKey } from '../i18n';
+import { isTouchDevice } from '../ui/device';
 import { getEngine } from './engineRef';
 import { model, newProjectId, useStore } from './store';
 
@@ -103,7 +104,7 @@ export function paste() {
   const s = st();
   if (!s.clipboard?.length) return;
   useStore.setState({ pasting: true });
-  toast('toast.pasteMode');
+  toast(isTouchDevice() ? 'toast.pasteMode.touch' : 'toast.pasteMode');
 }
 
 export function duplicate() {

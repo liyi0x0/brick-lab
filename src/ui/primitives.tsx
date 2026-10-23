@@ -2,6 +2,7 @@ import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from 're
 import { createPortal } from 'react-dom';
 import { X } from 'lucide-react';
 import { isConfirmOpen } from '../state/confirm';
+import { useTouchDevice } from './device';
 
 export function cx(...c: (string | false | null | undefined)[]) {
   return c.filter(Boolean).join(' ');
@@ -350,6 +351,7 @@ export function Menu({
   align?: 'left' | 'right';
 }) {
   const [open, setOpen] = useState(false);
+  const touch = useTouchDevice();
   const ref = useRef<HTMLDivElement>(null);
   useEffect(() => {
     if (!open) return;
@@ -395,7 +397,7 @@ export function Menu({
               >
                 <span className="flex w-5 justify-center text-ink-2">{it.icon}</span>
                 <span className="flex-1">{it.label}</span>
-                {it.shortcut && <span className="font-mono text-[11px] text-ink-3">{keyLabel(it.shortcut)}</span>}
+                {it.shortcut && !touch && <span className="font-mono text-[11px] text-ink-3">{keyLabel(it.shortcut)}</span>}
               </button>
             ),
           )}

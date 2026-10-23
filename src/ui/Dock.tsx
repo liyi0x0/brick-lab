@@ -20,6 +20,7 @@ import { useLang, useT, type TKey } from '../i18n';
 import { deleteSelection, duplicate, escape, focus, paintSelection, rotate, selectConnected, selectSimilar } from '../state/actions';
 import { model, useStore } from '../state/store';
 import { PartIcon } from './PartsPanel';
+import { useTouchDevice } from './device';
 import { cx, IconButton } from './primitives';
 
 const TOOLS: { id: Tool; icon: ReactNode; key: string }[] = [
@@ -43,7 +44,8 @@ function ToolButton({ id, icon, shortcut }: { id: Tool; icon: ReactNode; shortcu
       data-tip-key={shortcut}
       aria-pressed={active}
       className={cx(
-        'relative flex h-11 items-center gap-2 rounded-2xl px-3 transition-all duration-200 md:px-3.5',
+        // 手机上图标在上、文字在下；桌面上横排
+        'relative flex h-12 w-[52px] flex-col items-center justify-center gap-0.5 rounded-2xl transition-all duration-200 md:h-11 md:w-auto md:flex-row md:gap-2 md:px-3.5',
         active
           ? id === 'erase'
             ? 'bg-danger text-white shadow-[0_6px_16px_-6px_var(--danger)]'
@@ -52,7 +54,7 @@ function ToolButton({ id, icon, shortcut }: { id: Tool; icon: ReactNode; shortcu
       )}
     >
       {icon}
-      <span className="hidden text-[13px] font-medium md:inline">{t(`tool.${id}` as TKey)}</span>
+      <span className="text-[10px] leading-none font-medium md:text-[13px]">{t(`tool.${id}` as TKey)}</span>
     </button>
   );
 }
@@ -116,10 +118,11 @@ function SelectionBar() {
 
 function PasteBar() {
   const t = useT();
+  const touch = useTouchDevice();
   return (
     <div className="anim-up flex items-center gap-1 rounded-2xl bg-accent py-1 pr-1 pl-3.5 text-accent-ink shadow-[0_10px_30px_-10px_var(--accent)]">
       <ClipboardPaste size={16} />
-      <span className="mx-1.5 text-[13px] font-medium whitespace-nowrap">{t('hint.paste')}</span>
+      <span className="mx-1.5 text-[13px] font-medium whitespace-nowrap">{t(touch ? 'hint.paste.touch' : 'hint.paste')}</span>
       <button
         type="button"
         onClick={() => rotate(1)}

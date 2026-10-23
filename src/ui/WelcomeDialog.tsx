@@ -7,6 +7,7 @@ import { newProject, openProject } from '../state/actions';
 import { flushSave } from '../state/persistence';
 import { model, useStore } from '../state/store';
 import { askConfirm } from './ConfirmDialog';
+import { useTouchDevice } from './device';
 import { Logo } from './Logo';
 import { cx, Dialog } from './primitives';
 
@@ -87,6 +88,7 @@ export function WelcomeDialog() {
   const open = useStore((s) => s.ui.dialog === 'welcome');
   const openDialog = useStore((s) => s.openDialog);
   const [level, setLevel] = useState<0 | TemplateLevel>(0);
+  const touch = useTouchDevice();
   const close = () => openDialog(null);
 
   const start = () => {
@@ -111,8 +113,8 @@ export function WelcomeDialog() {
   };
 
   const tips = [
-    { icon: <MousePointerClick size={16} />, text: t('welcome.tip1') },
-    { icon: <Hand size={16} />, text: t('welcome.tip2') },
+    { icon: <MousePointerClick size={16} />, text: t(touch ? 'welcome.tip1.touch' : 'welcome.tip1') },
+    { icon: <Hand size={16} />, text: t(touch ? 'welcome.tip2.touch' : 'welcome.tip2') },
     { icon: <HardDrive size={16} />, text: t('welcome.tip3') },
   ];
   const levels: (0 | TemplateLevel)[] = [0, 1, 2, 3];

@@ -194,6 +194,15 @@ button:disabled {
     bottom: 300px;
   }
 }
+@media (max-width: 767px) {
+  /* 手机：零件清单占满宽度，并让出底部的工具栏和「零件」按钮 */
+  .bom-panel {
+    left: max(16px, env(safe-area-inset-left, 0px));
+    width: auto;
+    top: calc(max(12px, env(safe-area-inset-top, 0px)) + 60px);
+    bottom: calc(max(12px, env(safe-area-inset-bottom, 0px)) + 140px);
+  }
+}
 @media (min-width: 1024px) {
   .bom-panel {
     bottom: max(12px, env(safe-area-inset-bottom, 0px));
