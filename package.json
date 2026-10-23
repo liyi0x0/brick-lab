@@ -5,6 +5,14 @@
   "description": "乐高风格积木模拟器 — 在浏览器里自由搭建 3D 积木作品",
   "license": "MIT",
   "author": "liyi0x0",
+  "homepage": "https://liyi0x0.github.io/brick-lab/",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/liyi0x0/brick-lab.git"
+  },
+  "bugs": {
+    "url": "https://github.com/liyi0x0/brick-lab/issues"
+  },
   "keywords": [
     "lego",
     "bricks",

@@ -1,8 +1,12 @@
 # 积木工坊 · BrickLab
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+[![Deploy](https://github.com/liyi0x0/brick-lab/actions/workflows/pages.yml/badge.svg)](https://github.com/liyi0x0/brick-lab/actions/workflows/pages.yml)
+[![CI](https://github.com/liyi0x0/brick-lab/actions/workflows/ci.yml/badge.svg)](https://github.com/liyi0x0/brick-lab/actions/workflows/ci.yml)
 
 > 在浏览器里自由搭建 3D 积木作品的乐高风格模拟器。零安装、离线可用、作品自动保存。
+>
+> **🧱 在线体验：<https://liyi0x0.github.io/brick-lab/>**
 >
 > *A LEGO-style 3D brick builder that runs in the browser: realistic procedurally generated bricks, 57 parts and 54 official colours, 21 example models (up to 3,000+ bricks), LDraw import/export, BrickLink parts lists, share links, build replay and offline PWA support. MIT licensed.*
 
@@ -62,6 +66,7 @@ npm run preview    # 预览生产构建
 ```
 
 `dist/` 是纯静态文件（`base: './'`），可以直接部署到任意静态托管；部署在 HTTPS 下时可以「安装」为桌面/手机应用并离线使用。
+推送到 `main` 分支后，GitHub Actions 会自动测试、构建并发布到 [GitHub Pages](https://liyi0x0.github.io/brick-lab/)（见 `.github/workflows/pages.yml`）。
 
 想直接发给朋友？运行 `npm run build:single`，会得到一个约 1.2 MB 的 `dist-single/积木工坊.html`，所有代码都内联在里面，双击即可在浏览器中打开（无需服务器）。
 
