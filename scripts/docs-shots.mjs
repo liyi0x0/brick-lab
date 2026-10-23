@@ -63,8 +63,12 @@ await shoot('playback.jpg', {
   template: 'rocket',
   setup: async (page) => {
     await page.evaluate(() => window.__store.getState().setUI({ playback: true }));
-    await page.waitForTimeout(4200);
-    await page.keyboard.press(' ');
+    await page.waitForTimeout(900);
+    // 跳到约四分之三处，再单步前进一格以展示落下动画与高亮
+    await page.keyboard.press('End');
+    for (let i = 0; i < 28; i++) await page.keyboard.press('ArrowLeft');
+    await page.keyboard.press('ArrowRight');
+    await page.waitForTimeout(160);
   },
 });
 // 手机
