@@ -7,7 +7,12 @@ import { getEngine } from '../state/engineRef';
 import { model, useStore } from '../state/store';
 import { cx, IconButton } from './primitives';
 
-const SPEEDS = [0.5, 1, 2, 4];
+const SPEEDS = [0.5, 1, 2, 4, 8, 16];
+
+/** 按作品大小选默认速度：整段回放控制在一分钟左右 */
+function defaultSpeed(n: number) {
+  return SPEEDS.find((s) => (n * 0.42) / s <= 60) ?? 16;
+}
 
 function Player() {
   const t = useT();
@@ -17,7 +22,7 @@ function Player() {
   const n = order.length;
   const [step, setStep] = useState(0);
   const [playing, setPlaying] = useState(true);
-  const [speed, setSpeed] = useState(1);
+  const [speed, setSpeed] = useState(() => Math.max(1, defaultSpeed(n)));
   const prev = useRef(0);
 
   const exit = () => setUI({ playback: false });
