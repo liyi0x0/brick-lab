@@ -1,7 +1,7 @@
 import { createStore, del, get, set, type UseStore } from 'idb-keyval';
 import { decodeShare, parseProjectFile, toProjectFile, type ProjectData, type ProjectFile } from '../core/serialize';
 import { tr } from '../i18n';
-import { currentProjectData, onBeforeProjectSwitch, openProject } from './actions';
+import { currentProjectData, onAfterProjectOpen, onBeforeProjectSwitch, openProject } from './actions';
 import { getEngine } from './engineRef';
 import { model, newProjectId, useStore } from './store';
 
@@ -124,14 +124,18 @@ export async function saveCurrent(opts: { thumb?: boolean } = {}) {
     lastThumb = now;
     lastThumbProject = p.id;
   }
-  await writeSnapshot({ ...p }, data, thumb);
+  await writeSnapshot({ ...p }, data, thumb, true);
 }
 
-/** 把一份作品快照写入库中（与当前状态无关，可在切换作品前同步捕获） */
+/**
+ * 把一份作品快照写入库中（与当前状态无关，可在切换作品前同步捕获）。
+ * makeCurrent：写入后把它记为下次启动时恢复的作品——只有真正存进库里的作品才能成为启动作品。
+ */
 async function writeSnapshot(
   p: { id: string; name: string; createdAt: number },
   data: ReturnType<typeof currentProjectData>,
-  thumb?: string,
+  thumb: string | undefined,
+  makeCurrent: boolean,
 ) {
   const existing = (await kvGet<LibraryEntry[]>(INDEX_KEY))?.find((e) => e.id === p.id);
   if (!existing && data.bricks.length === 0) return;
@@ -139,6 +143,7 @@ async function writeSnapshot(
   const file: ProjectFile = toProjectFile(data, data.bricks);
   await kvSet(`p:${p.id}`, file);
   await upsertEntry({ id: p.id, name: p.name, createdAt: p.createdAt, updatedAt: Date.now(), count: data.bricks.length, thumb });
+  if (makeCurrent) setCurrentId(p.id);
 }
 
 export async function loadProject(id: string): Promise<{ data: ProjectData; entry: LibraryEntry } | null> {
@@ -217,15 +222,19 @@ export function startAutosave(): () => void {
     pending = false;
     window.clearTimeout(timer);
     const p = { ...useStore.getState().project };
-    void writeSnapshot(p, currentProjectData(), makeThumb());
+    void writeSnapshot(p, currentProjectData(), makeThumb(), false);
+  });
+  // 分享链接、导入的文件：载入后尽快存入库中，刷新页面也不会丢
+  const offOpen = onAfterProjectOpen((persist) => {
+    if (persist && model.count > 0) schedule();
   });
   const unsubModel = model.subscribe((e) => {
-    if (e.type === 'reset') {
-      setCurrentId(useStore.getState().project.id);
-      return;
-    }
+    if (e.type === 'reset') return;
     schedule();
   });
+  // 在已打开的页面里粘贴分享链接（只改变了 #m=…）也要能打开
+  const onHash = () => void openShareFromHash();
+  window.addEventListener('hashchange', onHash);
   const unsubStore = useStore.subscribe((s, p) => {
     if (s.project !== p.project && s.project.id === p.project.id) schedule();
   });
@@ -236,6 +245,8 @@ export function startAutosave(): () => void {
   window.addEventListener('pagehide', onHide);
   return () => {
     offSwitch();
+    offOpen();
+    window.removeEventListener('hashchange', onHash);
     unsubModel();
     unsubStore();
     document.removeEventListener('visibilitychange', onHide);
@@ -243,21 +254,37 @@ export function startAutosave(): () => void {
   };
 }
 
-/** 启动时恢复：优先分享链接，其次上次打开的作品 */
-export async function restoreSession(): Promise<'shared' | 'restored' | 'empty'> {
-  const st = useStore.getState();
+/** 若地址中带有分享数据（#m=…），打开它并从地址栏移除。返回是否成功打开 */
+export async function openShareFromHash(): Promise<boolean> {
   const m = /[#&]m=([A-Za-z0-9_-]+)/.exec(location.hash);
-  if (m) {
-    try {
-      const data = await decodeShare(m[1]);
-      openProject(data);
-      st.toast(tr(st.settings.lang, 'toast.shared', { name: data.name }), 'success');
-      history.replaceState(null, '', location.pathname + location.search);
-      return 'shared';
-    } catch (e) {
-      st.toast(tr(st.settings.lang, 'toast.importFailed', { err: e instanceof Error ? e.message : String(e) }), 'error');
-    }
+  if (!m) return false;
+  const st = useStore.getState();
+  try {
+    const data = await decodeShare(m[1]);
+    st.openDialog(null);
+    openProject(data, {}, { persist: true });
+    st.toast(tr(st.settings.lang, 'toast.shared', { name: data.name }), 'success');
+    return true;
+  } catch (e) {
+    st.toast(tr(st.settings.lang, 'toast.importFailed', { err: e instanceof Error ? e.message : String(e) }), 'error');
+    return false;
+  } finally {
+    history.replaceState(null, '', location.pathname + location.search);
   }
+}
+
+let restoring: Promise<'shared' | 'restored' | 'empty'> | null = null;
+
+/**
+ * 启动时恢复：优先分享链接，其次上次打开的作品。
+ * 只执行一次（React 严格模式会把副作用执行两遍，不能因此打开两份分享作品）。
+ */
+export function restoreSession(): Promise<'shared' | 'restored' | 'empty'> {
+  return (restoring ??= doRestore());
+}
+
+async function doRestore(): Promise<'shared' | 'restored' | 'empty'> {
+  if (await openShareFromHash()) return 'shared';
   const id = getCurrentId();
   if (id) {
     const p = await loadProject(id);

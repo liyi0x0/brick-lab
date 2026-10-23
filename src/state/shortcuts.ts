@@ -18,6 +18,7 @@ import {
   setView,
   undo,
 } from './actions';
+import { isConfirmOpen } from './confirm';
 import { getEngine } from './engineRef';
 import { saveCurrent } from './persistence';
 import { useStore } from './store';
@@ -32,8 +33,10 @@ export function installShortcuts(): () => void {
   const onKey = (e: KeyboardEvent) => {
     if (isTyping(e) || e.defaultPrevented) return;
     const s = useStore.getState();
-    if (s.ui.dialog) return;
+    if (s.ui.dialog || isConfirmOpen()) return;
     if (s.ui.playback) return; // 回放模式由播放条处理按键
+    // 鼠标/手指还按着（拖动积木、框选、旋转视角）时，只响应 Esc，避免键盘编辑与手势互相覆盖
+    if (getEngine()?.interaction.busy && e.key !== 'Escape') return;
     const mod = e.metaKey || e.ctrlKey;
     const k = e.key.toLowerCase();
 

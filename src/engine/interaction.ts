@@ -63,6 +63,7 @@ export class Interaction {
     this.el.addEventListener('pointercancel', this.onCancel);
     this.el.addEventListener('pointerleave', this.onLeave);
     this.el.addEventListener('contextmenu', this.onContext);
+    window.addEventListener('blur', this.onBlur);
     this.marquee = document.createElement('div');
     this.marquee.className = 'marquee';
     this.marquee.style.display = 'none';
@@ -76,6 +77,7 @@ export class Interaction {
     this.el.removeEventListener('pointercancel', this.onCancel);
     this.el.removeEventListener('pointerleave', this.onLeave);
     this.el.removeEventListener('contextmenu', this.onContext);
+    window.removeEventListener('blur', this.onBlur);
     this.marquee.remove();
   }
 
@@ -131,7 +133,7 @@ export class Interaction {
       if (hit && hit.brickId !== null) d.mode = 'pending-move';
       else if (e.shiftKey) d.mode = 'pending-marquee';
       if (d.mode !== 'pending') {
-        this.engine.controls.enabled = false;
+        this.setCameraLock(true);
         this.el.setPointerCapture(e.pointerId);
       }
     }
@@ -170,7 +172,7 @@ export class Interaction {
     const d = this.down;
     if (!d || d.pointerId !== e.pointerId) return;
     this.down = null;
-    this.engine.controls.enabled = true;
+    this.setCameraLock(false);
     if (this.el.hasPointerCapture(e.pointerId)) this.el.releasePointerCapture(e.pointerId);
     const moved = Math.hypot(e.clientX - d.x, e.clientY - d.y) > DRAG_PX;
     if (d.mode === 'move') this.commitMove();
@@ -203,8 +205,27 @@ export class Interaction {
     this.marquee.style.display = 'none';
     this.down = null;
     this.eraseIntent = false;
-    this.engine.controls.enabled = true;
+    this.setCameraLock(false);
   }
+
+  /**
+   * 拖动积木 / 框选时只锁住相机的旋转与平移，而不是整体禁用控制器：
+   * 这样第二根手指落下时控制器已经在跟踪第一根手指，双指缩放仍然正常。
+   */
+  private setCameraLock(locked: boolean) {
+    const c = this.engine.controls;
+    c.enableRotate = !locked;
+    c.enablePan = !locked;
+  }
+
+  /** 是否有进行中的指针手势（按下未松开）；此时键盘编辑会与手势冲突 */
+  get busy() {
+    return this.down !== null;
+  }
+
+  private onBlur = () => {
+    if (this.down) this.abortGesture();
+  };
 
   // -------------------------------------------------------------------------
   // 悬停
@@ -429,12 +450,17 @@ export class Interaction {
   private startMove(d: DownState) {
     const st = useStore.getState();
     const id = d.hit?.brickId;
-    if (id == null) return;
-    let sel = st.selection;
+    const anchor = id != null ? model.get(id) : undefined;
+    if (id == null || !anchor) {
+      // 按下后积木已被删除等情况：当作普通拖动处理
+      d.mode = 'orbit';
+      this.setCameraLock(false);
+      return;
+    }
+    let sel = st.selection.filter((i) => model.bricks.has(i));
     if (!sel.includes(id)) sel = d.shift ? [...sel, id] : [id];
     st.setSelection(sel);
     const bricks = sel.map((i) => model.get(i)).filter((b): b is Brick => !!b);
-    const anchor = model.get(id)!;
     this.move = { ids: sel, ignore: new Set(sel), anchor, bricks, offset: [0, 0, 0], valid: true };
     for (const i of sel) this.engine.bricks.setHidden(i, true);
     this.engine.ghost.setGroup(bricks, `move:${sel.join(',')}:${model.version}`);
@@ -490,8 +516,15 @@ export class Interaction {
       this.engine.invalidateShadows();
       return;
     }
+    // 以模型中的最新状态为准，防止拖动期间的其它修改被覆盖
+    const current = mv.ids.map((i) => model.get(i));
+    if (current.some((b) => !b)) {
+      sound.play('error');
+      this.engine.invalidateShadows();
+      return;
+    }
     const ok = model.updateBricks(
-      mv.bricks.map((b) => ({ ...b, x: b.x + dx, y: b.y + dy, z: b.z + dz })),
+      (current as Brick[]).map((b) => ({ ...b, x: b.x + dx, y: b.y + dy, z: b.z + dz })),
       'move',
     );
     sound.play(ok ? 'place' : 'error');
@@ -513,7 +546,7 @@ export class Interaction {
     if (this.move) {
       this.cancelMove();
       this.down = null;
-      this.engine.controls.enabled = true;
+      this.setCameraLock(false);
       return true;
     }
     return false;

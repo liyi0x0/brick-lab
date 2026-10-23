@@ -223,6 +223,7 @@ export function currentProjectData(): ProjectData & { bricks: Brick[] } {
 }
 
 const beforeSwitch = new Set<() => void>();
+const afterOpen = new Set<(persist: boolean) => void>();
 
 /** 在切换作品之前同步调用（用于保存尚未落盘的修改） */
 export function onBeforeProjectSwitch(fn: () => void) {
@@ -230,8 +231,21 @@ export function onBeforeProjectSwitch(fn: () => void) {
   return () => beforeSwitch.delete(fn);
 }
 
-/** 载入一份作品数据，成为当前作品 */
-export function openProject(data: ProjectData, meta: { id?: string; createdAt?: number } = {}) {
+/** 作品载入之后调用；persist 表示这份作品应立即存入「我的作品」 */
+export function onAfterProjectOpen(fn: (persist: boolean) => void) {
+  afterOpen.add(fn);
+  return () => afterOpen.delete(fn);
+}
+
+/**
+ * 载入一份作品数据，成为当前作品。
+ * persist：分享链接、导入的文件等用户明确打开的内容应立即保存，示例作品则等到第一次修改再保存。
+ */
+export function openProject(
+  data: ProjectData,
+  meta: { id?: string; createdAt?: number } = {},
+  opts: { persist?: boolean } = {},
+) {
   beforeSwitch.forEach((fn) => fn());
   useStore.setState((s) => ({
     project: {
@@ -249,6 +263,7 @@ export function openProject(data: ProjectData, meta: { id?: string; createdAt?: 
   getEngine()?.setPlayback(null);
   getEngine()?.setView('home', false);
   if (res.skipped) toast('toast.skipped', { n: res.skipped }, 'error');
+  afterOpen.forEach((fn) => fn(!!opts.persist));
   return res;
 }
 
@@ -353,13 +368,17 @@ export async function importFile(file: File) {
       const span = Math.max(...res.bricks.map((b) => Math.max(Math.abs(b.x), Math.abs(b.z)))) * 2 + 4;
       const size = [16, 24, 32, 48, 64].find((s) => s >= span) ?? 64;
       const name = res.name || file.name.replace(/\.(ldr|mpd|dat)$/i, '');
-      const loaded = openProject({ name, baseplateSize: size, baseplateColor: st().project.baseplateColor, bricks: res.bricks });
+      const loaded = openProject(
+        { name, baseplateSize: size, baseplateColor: st().project.baseplateColor, bricks: res.bricks },
+        {},
+        { persist: true },
+      );
       toast('toast.imported', { name });
       if (res.skipped && !loaded.skipped) toast('toast.skipped', { n: res.skipped }, 'error');
       return;
     }
     const data = parseProjectFile(JSON.parse(text));
-    openProject(data);
+    openProject(data, {}, { persist: true });
     toast('toast.imported', { name: data.name });
   } catch (e) {
     toast('toast.importFailed', { err: e instanceof Error ? e.message : String(e) }, 'error');

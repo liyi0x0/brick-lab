@@ -64,7 +64,13 @@ try {
 
   // 5. 清空后通过「打开文件」重新导入 LDraw
   await page.evaluate(() => window.__model.clearAll());
-  const [chooser] = await Promise.all([page.waitForEvent('filechooser'), page.keyboard.press('Control+o')]);
+  await page.waitForTimeout(300);
+  // 原生文件选择框偶尔会与上一次下载竞争，失败时重试一次
+  const openChooser = () => Promise.all([page.waitForEvent('filechooser', { timeout: 6000 }), page.keyboard.press('Control+o')]);
+  const [chooser] = await openChooser().catch(async () => {
+    await page.waitForTimeout(500);
+    return openChooser();
+  });
   await chooser.setFiles(ldrPath);
   await page.waitForTimeout(800);
   const reimported = await page.evaluate(() => window.__model.list().map((b) => `${b.part}|${b.color}|${b.rot}`).sort());

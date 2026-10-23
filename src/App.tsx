@@ -79,6 +79,23 @@ function useViewInset() {
   }, [leftOpen, bomOpen, playback]);
 }
 
+let sessionStarted = false;
+
+/** 恢复上次的作品；首次打开时先摆上一个示例作品再弹出欢迎页（只执行一次） */
+async function startSession() {
+  if (sessionStarted) return;
+  sessionStarted = true;
+  if ((await restoreSession()) !== 'empty') return;
+  const tpl = TEMPLATES[0];
+  openProject({
+    name: tpl.name[useStore.getState().settings.lang],
+    baseplateSize: tpl.baseplateSize,
+    baseplateColor: tpl.baseplateColor,
+    bricks: tpl.build(),
+  });
+  useStore.getState().openDialog('welcome');
+}
+
 export default function App() {
   const t = useT();
   const leftOpen = useStore((s) => s.ui.leftOpen);
@@ -91,18 +108,7 @@ export default function App() {
   useEffect(() => {
     const offKeys = installShortcuts();
     const offSave = startAutosave();
-    void restoreSession().then((r) => {
-      if (r !== 'empty') return;
-      // 首次打开：先摆上一个示例作品，再弹出欢迎页，第一眼看到的就是真实的积木
-      const tpl = TEMPLATES[0];
-      openProject({
-        name: tpl.name[useStore.getState().settings.lang],
-        baseplateSize: tpl.baseplateSize,
-        baseplateColor: tpl.baseplateColor,
-        bricks: tpl.build(),
-      });
-      useStore.getState().openDialog('welcome');
-    });
+    void startSession();
     return () => {
       offKeys();
       offSave();

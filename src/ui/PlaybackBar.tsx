@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { Pause, Play, SkipBack, SkipForward, StepBack, StepForward, X } from 'lucide-react';
 import { sound } from '../engine/sound';
 import { useT } from '../i18n';
+import { isConfirmOpen } from '../state/confirm';
 import { getEngine } from '../state/engineRef';
 import { model, useStore } from '../state/store';
 import { cx, IconButton } from './primitives';
@@ -52,7 +53,7 @@ function Player() {
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      if (useStore.getState().ui.dialog) return;
+      if (useStore.getState().ui.dialog || isConfirmOpen()) return;
       switch (e.key) {
         case ' ':
           setPlaying((p) => (step >= n ? (setStep(0), true) : !p));

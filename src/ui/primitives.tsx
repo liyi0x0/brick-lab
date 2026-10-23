@@ -1,6 +1,7 @@
 import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 import { X } from 'lucide-react';
+import { isConfirmOpen } from '../state/confirm';
 
 export function cx(...c: (string | false | null | undefined)[]) {
   return c.filter(Boolean).join(' ');
@@ -293,7 +294,8 @@ export function Dialog({
   useEffect(() => {
     if (!open) return;
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
+      // 上层还有确认框时，Esc 应该先关掉确认框
+      if (e.key === 'Escape' && !isConfirmOpen()) {
         e.stopPropagation();
         onClose();
       }

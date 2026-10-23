@@ -130,8 +130,10 @@ src/
 ```bash
 npm test           # 单元测试（零件、碰撞、撤销、拾取、序列化、LDraw 往返、示例作品…）
 npm run dev        # 另开终端
-npm run e2e        # 端到端冒烟测试：真实鼠标键盘操作 + 截图（需要本机安装 Chrome）
-node scripts/e2e-io.mjs        # 自动保存恢复、分享链接、LDraw 导出再导入、截图导出
+npm run e2e        # 全部端到端测试（需要本机安装 Chrome），包括：
+                   #   scripts/e2e.mjs             真实鼠标键盘操作：放置、旋转、叠放、拖动、粘贴、上色、拆除、撤销、框选
+                   #   scripts/e2e-io.mjs          自动保存恢复、分享链接、LDraw 导出再导入、截图导出、作品库
+                   #   scripts/e2e-regressions.mjs 代码审查发现的问题的回归测试（确认框、双指缩放、拖动中按键等）
 node scripts/docs-shots.mjs    # 重新生成 README 截图
 ```
 

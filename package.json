@@ -11,7 +11,7 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:watch": "vitest",
-    "e2e": "node scripts/e2e.mjs",
+    "e2e": "node scripts/e2e.mjs && node scripts/e2e-io.mjs && node scripts/e2e-regressions.mjs",
     "shot": "node scripts/shot.mjs",
     "build:single": "node scripts/build-single.mjs"
   },
