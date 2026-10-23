@@ -3,6 +3,18 @@
   "private": true,
   "version": "0.1.0",
   "description": "乐高风格积木模拟器 — 在浏览器里自由搭建 3D 积木作品",
+  "license": "MIT",
+  "author": "liyi0x0",
+  "keywords": [
+    "lego",
+    "bricks",
+    "3d",
+    "three.js",
+    "react",
+    "ldraw",
+    "builder",
+    "simulator"
+  ],
   "type": "module",
   "scripts": {
     "dev": "vite",

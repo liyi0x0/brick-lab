@@ -1,6 +1,10 @@
 # 积木工坊 · BrickLab
 
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+
 > 在浏览器里自由搭建 3D 积木作品的乐高风格模拟器。零安装、离线可用、作品自动保存。
+>
+> *A LEGO-style 3D brick builder that runs in the browser: realistic procedurally generated bricks, 57 parts and 54 official colours, 21 example models (up to 3,000+ bricks), LDraw import/export, BrickLink parts lists, share links, build replay and offline PWA support. MIT licensed.*
 
 ![积木工坊：编辑器主界面](docs/images/hero.jpg)
 
@@ -160,6 +164,17 @@ node scripts/docs-shots.mjs    # 重新生成 README 截图
 - **作品文件 `.brick.json`**：`{ format: "brick-lab", version: 1, name, baseplate, bricks: [[零件, 颜色, x, y, z, 朝向], …] }`
 - **分享链接**：`#m=` 后为 deflate 压缩的二进制（每块积木 10 字节），500 块积木通常只有几 KB。
 
+## 🤝 参与贡献
+
+欢迎提 Issue 和 Pull Request！提交前请确认 `npm run typecheck`、`npm test` 通过；涉及交互的改动建议再跑一遍 `npm run e2e`。
+新增示例作品时，在 `src/core/templates/` 下对应主题的文件里添加即可，测试会自动校验它没有重叠、越界或悬空的零件。
+
+## 📄 许可证
+
+本项目以 [MIT 许可证](LICENSE) 开源。
+
+使用的第三方开源软件（均为宽松许可证）：[three.js](https://github.com/mrdoob/three.js)（MIT）、[React](https://github.com/facebook/react)（MIT）、[Zustand](https://github.com/pmndrs/zustand)（MIT）、[Tailwind CSS](https://github.com/tailwindlabs/tailwindcss)（MIT）、[lucide](https://github.com/lucide-icons/lucide)（ISC）、[N8AO](https://github.com/N8python/n8ao)（ISC）、[postprocessing](https://github.com/pmndrs/postprocessing)（Zlib）、[idb-keyval](https://github.com/jakearchibald/idb-keyval)（Apache-2.0）。
+
 ---
 
-LEGO® 是乐高集团的商标，本项目为个人爱好作品，与乐高集团无关。零件编号与颜色数据来自 [LDraw](https://www.ldraw.org/) 与 BrickLink 的公开资料。
+LEGO® 是乐高集团的商标，本项目为个人爱好作品，与乐高集团无关，也未获其授权或认可。零件编号与颜色编号参考自 [LDraw](https://www.ldraw.org/) 与 BrickLink 的公开资料；本项目不包含任何 LDraw 零件文件。
