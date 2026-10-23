@@ -2,7 +2,20 @@
 
 > 在浏览器里自由搭建 3D 积木作品的乐高风格模拟器。零安装、离线可用、作品自动保存。
 
-![积木工坊](docs/images/hero.png)
+![积木工坊：编辑器主界面](docs/images/hero.jpg)
+
+<table>
+  <tr>
+    <td width="44%"><img src="docs/images/dark.jpg" alt="深色主题与多选描边" /></td>
+    <td width="38%"><img src="docs/images/playback.jpg" alt="搭建回放" /></td>
+    <td width="18%"><img src="docs/images/mobile.jpg" alt="手机端" /></td>
+  </tr>
+  <tr>
+    <td align="center">深色主题 · 选区描边</td>
+    <td align="center">搭建回放</td>
+    <td align="center">手机端</td>
+  </tr>
+</table>
 
 ## ✨ 亮点
 
@@ -17,7 +30,8 @@
   - 导出 **BrickLink 采购清单 XML** 和 **CSV 零件清单**，可以照着买实体积木。
 - **分享与保存**：整个作品压缩进一个链接发给朋友；「我的作品」本地自动保存（IndexedDB）并生成缩略图；高清 / 透明背景截图。
 - **搭建回放**：按层逐块重现搭建过程，像一本动态说明书。
-- **贴心细节**：浅色 / 深色主题、中英双语、合成的「咔哒」音效、手机与平板触控（长按拆除）、拖放文件打开。
+- **示例作品**：温馨小屋、红色小飞机、城堡塔楼、火箭发射台、像素爱心、彩虹金字塔，一键载入后可以随意改造。
+- **贴心细节**：浅色 / 深色主题、中英双语、合成的「咔哒」音效、手机与平板触控（长按拆除）、拖放文件打开、可安装为 PWA 离线使用。
 
 ## 🚀 快速开始
 
@@ -115,7 +129,11 @@ src/
 npm test           # 单元测试（零件、碰撞、撤销、拾取、序列化、LDraw 往返、示例作品…）
 npm run dev        # 另开终端
 npm run e2e        # 端到端冒烟测试：真实鼠标键盘操作 + 截图（需要本机安装 Chrome）
+node scripts/e2e-io.mjs        # 自动保存恢复、分享链接、LDraw 导出再导入、截图导出
+node scripts/docs-shots.mjs    # 重新生成 README 截图
 ```
+
+离线能力可以这样验证：`npm run build && npx vite preview`，然后 `node scripts/offline-check.mjs http://localhost:4173/`。
 
 ## 📦 文件格式
 
