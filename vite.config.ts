@@ -1,13 +1,33 @@
 /// <reference types="vitest/config" />
-import { defineConfig } from 'vite';
+import fs from 'node:fs';
+import path from 'node:path';
+import { defineConfig, type Plugin } from 'vite';
 import react from '@vitejs/plugin-react';
 import tailwindcss from '@tailwindcss/vite';
+
+/** 构建完成后给 Service Worker 写入版本号，确保每次部署都会刷新离线缓存 */
+function swVersion(): Plugin {
+  let outDir = 'dist';
+  return {
+    name: 'sw-version',
+    apply: 'build',
+    configResolved(config) {
+      outDir = path.resolve(config.root, config.build.outDir);
+    },
+    closeBundle() {
+      const file = path.join(outDir, 'sw.js');
+      if (!fs.existsSync(file)) return;
+      const id = Date.now().toString(36);
+      fs.writeFileSync(file, fs.readFileSync(file, 'utf8').replaceAll('__BUILD_ID__', id));
+    },
+  };
+}
 
 export default defineConfig(({ mode }) => {
   const single = mode === 'single';
   return {
     base: './',
-    plugins: [react(), tailwindcss()],
+    plugins: [react(), tailwindcss(), swVersion()],
     build: {
       target: 'es2022',
       chunkSizeWarningLimit: 1500,

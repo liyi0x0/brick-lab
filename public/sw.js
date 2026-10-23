@@ -1,5 +1,6 @@
 // 离线缓存：页面走「网络优先」，带哈希的静态资源走「缓存优先」
-const CACHE = 'brick-lab-v1';
+// 缓存名中的版本占位符会在生产构建时替换为本次构建的版本号，新版本激活后清掉旧缓存
+const CACHE = 'brick-lab-__BUILD_ID__';
 const CORE = ['./', './index.html', './manifest.webmanifest', './favicon.svg', './icon-192.png'];
 
 self.addEventListener('install', (event) => {
