@@ -217,3 +217,19 @@ describe('序列化', () => {
     expect(() => parseProjectFile({ foo: 1 })).toThrow();
   });
 });
+
+describe('相连积木', () => {
+  it('沿凸点连接扩散，侧面贴靠不算相连', async () => {
+    const { connectedBricks } = await import('../src/core/placement');
+    const m = new Model();
+    const [a, b, c, d] = m.addBricks([
+      { part: 'brick-2x4', color: 4, x: 0, y: 0, z: 0, rot: 0 },
+      { part: 'brick-2x2', color: 4, x: 3, y: 3, z: 0, rot: 0 }, // 压在 a 右端
+      { part: 'plate-1x1', color: 4, x: 4, y: 6, z: 1, rot: 0 }, // 压在 b 上
+      { part: 'brick-1x1', color: 4, x: 0, y: 0, z: 2, rot: 0 }, // 与 a 侧面贴靠
+    ])!;
+    const ids = connectedBricks(m.grid, (id) => m.get(id), a.id).sort();
+    expect(ids).toEqual([a.id, b.id, c.id].sort());
+    expect(connectedBricks(m.grid, (id) => m.get(id), d.id)).toEqual([d.id]);
+  });
+});

@@ -29,6 +29,7 @@ const zh = {
   'action.deselect': '取消选择',
   'action.selectAll': '全选',
   'action.selectSimilar': '选择相同零件',
+  'action.selectConnected': '选择相连积木（双击积木）',
   'action.paintSelection': '应用当前颜色',
 
   'panel.parts': '零件',
@@ -80,7 +81,7 @@ const zh = {
   'bom.empty': '放置积木后，这里会列出所需的全部零件。',
 
   'hint.build': '点击放置 · R 旋转 · 右键拆除 · Alt+点击吸取 · 拖动旋转视角',
-  'hint.select': '点击选择 · 拖动积木移动 · Shift 多选/框选 · 方向键微调',
+  'hint.select': '点击选择 · 双击选相连 · 拖动积木移动 · Shift 多选/框选 · 方向键微调',
   'hint.paint': '点击积木应用颜色 · Alt+点击吸取颜色',
   'hint.erase': '点击积木将其拆除 · Ctrl+Z 撤销',
   'hint.paste': '点击放置副本 · R 旋转 · Esc 结束',
@@ -201,6 +202,10 @@ const zh = {
   'help.k.esc': '取消 / 退出粘贴',
   'help.k.cycle': '上一个 / 下一个零件',
   'help.k.help': '打开帮助',
+  'help.dbl': '双击',
+  'help.dbl.desc': '选择模式下选中相连的整组积木',
+  'help.long': '长按（触屏）',
+  'help.long.desc': '搭建模式下拆除积木',
   'help.k.views': '切换视角：默认 / 俯视 / 前视 / 右视',
 
   'confirm.new': '新建作品？当前作品已自动保存在「我的作品」中。',
@@ -239,6 +244,7 @@ const en: Dict = {
   'action.deselect': 'Deselect',
   'action.selectAll': 'Select all',
   'action.selectSimilar': 'Select same part',
+  'action.selectConnected': 'Select connected (double-click)',
   'action.paintSelection': 'Apply current color',
 
   'panel.parts': 'Parts',
@@ -290,7 +296,7 @@ const en: Dict = {
   'bom.empty': 'Place some bricks and every part you need will be listed here.',
 
   'hint.build': 'Click to place · R rotate · Right-click erase · Alt+click pick · Drag to orbit',
-  'hint.select': 'Click to select · Drag bricks to move · Shift for multi/box select · Arrows nudge',
+  'hint.select': 'Click to select · Double-click for connected · Drag to move · Shift multi/box select · Arrows nudge',
   'hint.paint': 'Click a brick to apply the color · Alt+click to pick a color',
   'hint.erase': 'Click a brick to remove it · Ctrl+Z to undo',
   'hint.paste': 'Click to place the copy · R rotate · Esc to finish',
@@ -411,6 +417,10 @@ const en: Dict = {
   'help.k.esc': 'Cancel / stop pasting',
   'help.k.cycle': 'Previous / next part',
   'help.k.help': 'Open help',
+  'help.dbl': 'Double-click',
+  'help.dbl.desc': 'Select a whole connected group (Select mode)',
+  'help.long': 'Long-press (touch)',
+  'help.long.desc': 'Erase a brick while building',
   'help.k.views': 'Views: default / top / front / right',
 
   'confirm.new': 'Start a new creation? The current one is already saved in My creations.',

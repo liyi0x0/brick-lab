@@ -58,7 +58,7 @@ function ProjectName() {
         setEditing(true);
       }}
       data-tip={t('project.rename')}
-      className="h-8 max-w-[140px] truncate rounded-lg px-2 text-[13px] font-medium text-ink-2 transition-colors hover:bg-hover hover:text-ink sm:max-w-[240px]"
+      className="h-8 max-w-[96px] truncate rounded-lg px-2 text-[13px] font-medium text-ink-2 transition-colors hover:bg-hover hover:text-ink min-[420px]:max-w-[150px] sm:max-w-[240px]"
     >
       {name}
     </button>
@@ -123,7 +123,7 @@ export function TopBar() {
       <div className="glass absolute top-3 right-3 z-20 flex h-12 items-center gap-0.5 rounded-2xl px-1.5">
         <IconButton icon={<Undo2 size={18} />} label={t('action.undo')} shortcut="Mod+Z" disabled={!canUndo} onClick={undo} />
         <IconButton icon={<Redo2 size={18} />} label={t('action.redo')} shortcut="Mod+Shift+Z" disabled={!canRedo} onClick={redo} />
-        <div className="mx-1 h-5 w-px bg-line-2" />
+        <div className="mx-1 hidden h-5 w-px bg-line-2 sm:block" />
         <div className="hidden items-center gap-0.5 lg:flex">
           <IconButton icon={<FolderOpen size={18} />} label={t('menu.library')} onClick={() => openDialog('library')} />
           <IconButton icon={<Clapperboard size={18} />} label={t('menu.instructions')} onClick={startPlayback} />
@@ -141,15 +141,14 @@ export function TopBar() {
             <IconButton icon={<Ellipsis size={18} />} label={t('menu.more')} onClick={toggle} className={cx(open && '!bg-hover !text-ink')} />
           )}
         />
-        <Button variant="primary" icon={<Share2 size={16} />} onClick={() => openDialog('export')} className="ml-1 hidden sm:inline-flex">
-          {t('menu.export')}
-        </Button>
-        <IconButton
-          icon={<Share2 size={18} />}
-          label={t('menu.export')}
-          onClick={() => openDialog('export')}
-          className="sm:hidden"
-        />
+        <span className="ml-1 hidden sm:block">
+          <Button variant="primary" icon={<Share2 size={16} />} onClick={() => openDialog('export')}>
+            {t('menu.export')}
+          </Button>
+        </span>
+        <span className="sm:hidden">
+          <IconButton icon={<Share2 size={18} />} label={t('menu.export')} onClick={() => openDialog('export')} />
+        </span>
       </div>
     </>
   );

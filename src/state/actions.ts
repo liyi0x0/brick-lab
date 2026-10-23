@@ -2,7 +2,7 @@ import * as THREE from 'three';
 import { bomToBrickLinkXML, bomToCSV, buildBom } from '../core/bom';
 import { hasColor } from '../core/colors';
 import { fromLDraw, toLDraw } from '../core/ldraw';
-import { groupBounds, groupFits, groupPivot, rotateGroup } from '../core/placement';
+import { connectedBricks, groupBounds, groupFits, groupPivot, rotateGroup } from '../core/placement';
 import { encodeShare, FILE_EXTENSION, parseProjectFile, toProjectFile, type ProjectData } from '../core/serialize';
 import type { Brick, Rot, Tool } from '../core/types';
 import type { ViewPreset } from '../engine/Engine';
@@ -122,6 +122,18 @@ export function selectSimilar() {
   if (!first) return;
   const ids = [...model.bricks.values()].filter((b) => b.part === first.part && b.color === first.color).map((b) => b.id);
   s.setSelection(ids);
+}
+
+/** 选中与当前选区相连的全部积木 */
+export function selectConnected(fromId?: number) {
+  const s = st();
+  const seeds = fromId !== undefined ? [fromId] : s.selection;
+  if (!seeds.length) return;
+  const all = new Set<number>();
+  for (const id of seeds) for (const c of connectedBricks(model.grid, (i) => model.get(i), id)) all.add(c);
+  s.setTool('select');
+  s.setSelection([...all]);
+  sound.play('select');
 }
 
 export function paintSelection(colorId: number) {

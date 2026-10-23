@@ -7,6 +7,7 @@ import {
   Focus,
   Layers,
   MousePointer2,
+  Network,
   PaintBucket,
   RotateCw,
   Trash,
@@ -16,7 +17,7 @@ import { colorName, getColor } from '../core/colors';
 import { getPart } from '../core/parts';
 import type { Tool } from '../core/types';
 import { useLang, useT, type TKey } from '../i18n';
-import { deleteSelection, duplicate, escape, focus, paintSelection, rotate, selectSimilar } from '../state/actions';
+import { deleteSelection, duplicate, escape, focus, paintSelection, rotate, selectConnected, selectSimilar } from '../state/actions';
 import { useStore } from '../state/store';
 import { PartIcon } from './PartsPanel';
 import { cx, IconButton } from './primitives';
@@ -103,6 +104,7 @@ function SelectionBar() {
         tipSide="top"
         size="sm"
       />
+      <IconButton icon={<Network size={17} />} label={t('action.selectConnected')} onClick={() => selectConnected()} tipSide="top" size="sm" />
       <IconButton icon={<Layers size={17} />} label={t('action.selectSimilar')} onClick={selectSimilar} tipSide="top" size="sm" />
       <IconButton icon={<Focus size={17} />} label={t('action.focus')} shortcut="F" onClick={focus} tipSide="top" size="sm" />
       <IconButton icon={<Trash size={17} />} label={t('action.delete')} shortcut="Delete" onClick={deleteSelection} tipSide="top" size="sm" tone="danger" />

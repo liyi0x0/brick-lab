@@ -11,6 +11,7 @@ import {
 } from '../core/placement';
 import type { Brick, BrickData } from '../core/types';
 import { tr } from '../i18n';
+import { selectConnected } from '../state/actions';
 import { model, useStore } from '../state/store';
 import type { Engine } from './Engine';
 import { sound } from './sound';
@@ -51,6 +52,8 @@ export class Interaction {
   private clipRef: BrickData[] | null = null;
   private clipKey = 0;
   private el: HTMLCanvasElement;
+  private longPress = 0;
+  private lastClick = { time: 0, id: -1 };
 
   constructor(private engine: Engine) {
     this.el = engine.renderer.domElement;
@@ -113,6 +116,17 @@ export class Interaction {
     };
     this.down = d;
     if (this.engine.isPlayback) return;
+    // 触屏长按：在搭建 / 上色模式下拆除积木（触屏没有右键）
+    window.clearTimeout(this.longPress);
+    if (e.pointerType !== 'mouse' && hit && hit.brickId !== null && (s.tool === 'build' || s.tool === 'paint') && !s.pasting) {
+      const id = hit.brickId;
+      this.longPress = window.setTimeout(() => {
+        if (this.down !== d || d.mode !== 'pending') return;
+        d.mode = 'orbit'; // 消耗掉这次手势，松手时不再放置
+        navigator.vibrate?.(12);
+        this.erase([id]);
+      }, 520);
+    }
     if (e.button === 0 && !e.altKey && s.tool === 'select' && !s.pasting) {
       if (hit && hit.brickId !== null) d.mode = 'pending-move';
       else if (e.shiftKey) d.mode = 'pending-marquee';
@@ -152,6 +166,7 @@ export class Interaction {
 
   private onUp = (e: PointerEvent) => {
     this.pointers.delete(e.pointerId);
+    window.clearTimeout(this.longPress);
     const d = this.down;
     if (!d || d.pointerId !== e.pointerId) return;
     this.down = null;
@@ -364,6 +379,14 @@ export class Interaction {
       return;
     }
     const id = hit.brickId;
+    // 双击：选择相连的整组积木
+    const now = performance.now();
+    if (!additive && this.lastClick.id === id && now - this.lastClick.time < 360) {
+      this.lastClick = { time: 0, id: -1 };
+      selectConnected(id);
+      return;
+    }
+    this.lastClick = { time: now, id };
     if (additive) {
       st.setSelection(st.selection.includes(id) ? st.selection.filter((x) => x !== id) : [...st.selection, id]);
     } else {

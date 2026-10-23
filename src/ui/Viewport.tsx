@@ -2,6 +2,7 @@ import { useEffect, useRef } from 'react';
 import * as THREE from 'three';
 import { Engine } from '../engine/Engine';
 import { setEngine } from '../state/engineRef';
+import * as actions from '../state/actions';
 import { model, useStore } from '../state/store';
 
 export function Viewport() {
@@ -14,6 +15,7 @@ export function Viewport() {
       __engine: engine,
       __model: model,
       __store: useStore,
+      __actions: actions,
       __project: (x: number, y: number, z: number) => engine.project(new THREE.Vector3(x, y, z)),
     });
     return () => {

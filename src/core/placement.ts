@@ -360,3 +360,34 @@ export function rotateGroup<T extends Pick<Brick, 'part' | 'x' | 'y' | 'z' | 'ro
     };
   });
 }
+
+/**
+ * 与指定积木相连的所有积木（通过上下叠放、凸点咬合连接；侧面贴靠不算相连）。
+ */
+export function connectedBricks(
+  grid: OccupancyGrid,
+  getBrick: (id: number) => Brick | undefined,
+  startId: number,
+): number[] {
+  const seen = new Set<number>([startId]);
+  const queue = [startId];
+  while (queue.length) {
+    const id = queue.pop()!;
+    const b = getBrick(id);
+    if (!b) continue;
+    const part = getPart(b.part);
+    const cols = new Map<string, [number, number]>();
+    for (const [x, , z] of brickVoxels(b)) cols.set(`${x},${z}`, [x, z]);
+    for (const [x, z] of cols.values()) {
+      for (const y of [b.y + part.h, b.y - 1]) {
+        if (y < 0) continue;
+        const other = grid.get(x, y, z);
+        if (other !== undefined && !seen.has(other)) {
+          seen.add(other);
+          queue.push(other);
+        }
+      }
+    }
+  }
+  return [...seen];
+}

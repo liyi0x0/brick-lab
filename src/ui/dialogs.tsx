@@ -71,6 +71,8 @@ export function HelpDialog() {
     ['help.wheel', 'help.wheel.desc'],
     ['help.alt', 'help.alt.desc'],
     ['help.shift', 'help.shift.desc'],
+    ['help.dbl', 'help.dbl.desc'],
+    ['help.long', 'help.long.desc'],
   ] as [TKey, TKey][];
   const keys: [string[], TKey][] = [
     [['B', 'V', 'P', 'E'], 'help.k.tools'],
