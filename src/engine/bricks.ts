@@ -58,7 +58,8 @@ class Batch {
     m.frustumCulled = false;
     m.castShadow = this.kind !== 'trans';
     m.receiveShadow = true;
-    m.setColorAt(0, tmpColor.set(0xffffff));
+    // 注意：不能复用模块级 tmpColor —— add() 正把它作为颜色参数传进来，扩容时会被覆盖
+    m.setColorAt(0, new THREE.Color(1, 1, 1));
     m.instanceColor!.setUsage(THREE.DynamicDrawUsage);
     return m;
   }

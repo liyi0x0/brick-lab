@@ -17,6 +17,7 @@ import { Toasts } from './ui/Toasts';
 import { TopBar } from './ui/TopBar';
 import { ViewControls } from './ui/ViewControls';
 import { Viewport } from './ui/Viewport';
+import { WelcomeDialog } from './ui/WelcomeDialog';
 
 /** 主题：写入 <html data-theme>，跟随系统时监听变化 */
 function useTheme() {
@@ -131,6 +132,7 @@ export default function App() {
       <SettingsDialog />
       <ExportDialog />
       <LibraryDialog />
+      <WelcomeDialog />
       <DropZone />
       <TooltipLayer />
     </div>

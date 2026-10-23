@@ -57,18 +57,57 @@ class Thumbnailer {
     return m;
   }
 
-  /** 把一个包围球放进视野：从右前上方 3/4 视角观察 */
-  private frame(sphere: THREE.Sphere, aspect: number, margin = 1.12) {
+  /**
+   * 让包围盒在画面中尽量撑满：把 8 个角投影到屏幕，迭代调整距离并重新居中。
+   * 比包围球更紧凑，扁平或细长的模型也能占满画面。
+   */
+  private fitBox(box: THREE.Box3, aspect: number, fill = 0.86) {
     const dir = new THREE.Vector3(0.62, 0.62, 1).normalize();
-    const fov = THREE.MathUtils.degToRad(this.camera.fov);
-    const f = aspect < 1 ? 2 * Math.atan(Math.tan(fov / 2) * aspect) : fov;
-    const dist = (sphere.radius * margin) / Math.sin(f / 2);
-    this.camera.aspect = aspect;
-    this.camera.position.copy(sphere.center).addScaledVector(dir, dist);
-    this.camera.near = dist / 50;
-    this.camera.far = dist * 4;
-    this.camera.lookAt(sphere.center);
-    this.camera.updateProjectionMatrix();
+    const cam = this.camera;
+    cam.aspect = aspect;
+    cam.updateProjectionMatrix();
+    const target = box.getCenter(new THREE.Vector3());
+    const radius = box.getSize(new THREE.Vector3()).length() / 2 || 1;
+    let dist = radius / Math.sin(THREE.MathUtils.degToRad(cam.fov) / 2);
+    const corners = [0, 1, 2, 3, 4, 5, 6, 7].map(
+      (i) =>
+        new THREE.Vector3(
+          i & 1 ? box.max.x : box.min.x,
+          i & 2 ? box.max.y : box.min.y,
+          i & 4 ? box.max.z : box.min.z,
+        ),
+    );
+    const v = new THREE.Vector3();
+    for (let iter = 0; iter < 4; iter++) {
+      cam.position.copy(target).addScaledVector(dir, dist);
+      cam.near = dist / 50;
+      cam.far = dist * 6;
+      cam.lookAt(target);
+      cam.updateProjectionMatrix();
+      cam.updateMatrixWorld();
+      let x0 = Infinity,
+        x1 = -Infinity,
+        y0 = Infinity,
+        y1 = -Infinity;
+      for (const c of corners) {
+        v.copy(c).project(cam);
+        x0 = Math.min(x0, v.x);
+        x1 = Math.max(x1, v.x);
+        y0 = Math.min(y0, v.y);
+        y1 = Math.max(y1, v.y);
+      }
+      // 平移目标点，使投影中心回到画面中央
+      const right = new THREE.Vector3().setFromMatrixColumn(cam.matrixWorld, 0);
+      const up = new THREE.Vector3().setFromMatrixColumn(cam.matrixWorld, 1);
+      const halfH = Math.tan(THREE.MathUtils.degToRad(cam.fov) / 2) * dist;
+      target.addScaledVector(right, ((x0 + x1) / 2) * halfH * aspect);
+      target.addScaledVector(up, ((y0 + y1) / 2) * halfH);
+      const extent = Math.max((x1 - x0) / 2, (y1 - y0) / 2);
+      dist *= extent / fill;
+    }
+    cam.position.copy(target).addScaledVector(dir, dist);
+    cam.lookAt(target);
+    cam.updateProjectionMatrix();
   }
 
   /** 以指定颜色渲染所有零件到一张图集 */
@@ -88,8 +127,7 @@ class Thumbnailer {
       const g = getPartGeometry(p.id);
       this.mesh.geometry = g;
       this.mesh.position.set(0, 0, 0);
-      const sphere = g.boundingSphere!.clone();
-      this.frame(sphere, 1, 1.02);
+      this.fitBox(g.boundingBox!, 1, 0.84);
       const col = i % cols;
       const row = Math.floor(i / cols);
       const y = (rows - 1 - row) * cell;
@@ -123,7 +161,7 @@ class Thumbnailer {
     r.setSize(width, height, false);
     r.setViewport(0, 0, width, height);
     r.clear();
-    this.frame(box.getBoundingSphere(new THREE.Sphere()), width / height, 1.0);
+    this.fitBox(box, width / height, 0.9);
     r.render(this.scene, this.camera);
     const url = r.domElement.toDataURL('image/png');
     this.scene.remove(group);
