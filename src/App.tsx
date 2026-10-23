@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import { PanelLeftOpen, Shapes } from 'lucide-react';
-import { TEMPLATES } from './core/templates';
+import { buildTemplate, TEMPLATES } from './core/templates';
 import { thumbnailer } from './engine/thumbnails';
 import { useT } from './i18n';
 import { openProject } from './state/actions';
@@ -91,7 +91,7 @@ async function startSession() {
     name: tpl.name[useStore.getState().settings.lang],
     baseplateSize: tpl.baseplateSize,
     baseplateColor: tpl.baseplateColor,
-    bricks: tpl.build(),
+    bricks: buildTemplate(tpl),
   });
   useStore.getState().openDialog('welcome');
 }

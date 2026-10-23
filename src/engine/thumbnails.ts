@@ -142,17 +142,29 @@ class Thumbnailer {
     return { url: this.lastUrl, cols, cell, index };
   }
 
-  /** 渲染一组积木的预览图（用于示例作品卡片） */
+  /** 渲染一组积木的预览图（用于示例作品卡片）；按「零件×颜色」实例化，上千块也很快 */
   modelImage(bricks: BrickData[], width: number, height: number): string {
     const group = new THREE.Group();
     const box = new THREE.Box3();
     const tmp = new THREE.Box3();
+    const m = new THREE.Matrix4();
+    const byKey = new Map<string, BrickData[]>();
     for (const b of bricks) {
-      const mesh = new THREE.Mesh(getPartGeometry(b.part), this.material(b.color));
-      brickMatrix({ ...b, id: 0 }, mesh.matrix);
-      mesh.matrixAutoUpdate = false;
+      const k = `${b.part}|${b.color}`;
+      const list = byKey.get(k);
+      if (list) list.push(b);
+      else byKey.set(k, [b]);
+    }
+    for (const list of byKey.values()) {
+      const geo = getPartGeometry(list[0].part);
+      const mesh = new THREE.InstancedMesh(geo, this.material(list[0].color), list.length);
+      list.forEach((b, i) => {
+        brickMatrix({ ...b, id: 0 }, m);
+        mesh.setMatrixAt(i, m);
+        box.union(tmp.copy(geo.boundingBox!).applyMatrix4(m));
+      });
+      mesh.frustumCulled = false;
       group.add(mesh);
-      box.union(tmp.copy(getPartGeometry(b.part).boundingBox!).applyMatrix4(mesh.matrix));
     }
     this.mesh.visible = false;
     this.scene.add(group);
@@ -165,6 +177,7 @@ class Thumbnailer {
     r.render(this.scene, this.camera);
     const url = r.domElement.toDataURL('image/png');
     this.scene.remove(group);
+    for (const c of group.children) (c as THREE.InstancedMesh).dispose();
     this.mesh.visible = true;
     return url;
   }

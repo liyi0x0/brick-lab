@@ -126,6 +126,7 @@ export function TopBar() {
         <IconButton icon={<Redo2 size={18} />} label={t('action.redo')} shortcut="Mod+Shift+Z" disabled={!canRedo} onClick={redo} />
         <div className="mx-1 hidden h-5 w-px bg-line-2 sm:block" />
         <div className="hidden items-center gap-0.5 lg:flex">
+          <IconButton icon={<Sparkles size={18} />} label={t('menu.templates')} onClick={() => openDialog('welcome')} />
           <IconButton icon={<FolderOpen size={18} />} label={t('menu.library')} onClick={() => openDialog('library')} />
           <IconButton icon={<Clapperboard size={18} />} label={t('menu.instructions')} onClick={startPlayback} />
           <IconButton icon={<Settings size={18} />} label={t('menu.settings')} onClick={() => openDialog('settings')} />

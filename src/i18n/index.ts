@@ -128,6 +128,11 @@ const zh = {
   'welcome.tip1': '点击放置积木，按 R 旋转',
   'welcome.tip2': '拖动旋转视角，滚轮缩放，右键拖动平移',
   'welcome.tip3': '作品会自动保存在浏览器中',
+  'welcome.count': '{n} 个示例',
+  'level.all': '全部',
+  'level.1': '入门',
+  'level.2': '进阶',
+  'level.3': '挑战',
 
   'settings.title': '设置',
   'settings.quality': '画质',
@@ -343,6 +348,11 @@ const en: Dict = {
   'welcome.tip1': 'Click to place a brick, press R to rotate',
   'welcome.tip2': 'Drag to orbit, scroll to zoom, right-drag to pan',
   'welcome.tip3': 'Your work is saved in this browser automatically',
+  'welcome.count': '{n} examples',
+  'level.all': 'All',
+  'level.1': 'Easy',
+  'level.2': 'Medium',
+  'level.3': 'Challenge',
 
   'settings.title': 'Settings',
   'settings.quality': 'Quality',
