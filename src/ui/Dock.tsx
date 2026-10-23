@@ -18,7 +18,7 @@ import { getPart } from '../core/parts';
 import type { Tool } from '../core/types';
 import { useLang, useT, type TKey } from '../i18n';
 import { deleteSelection, duplicate, escape, focus, paintSelection, rotate, selectConnected, selectSimilar } from '../state/actions';
-import { useStore } from '../state/store';
+import { model, useStore } from '../state/store';
 import { PartIcon } from './PartsPanel';
 import { cx, IconButton } from './primitives';
 
@@ -146,6 +146,9 @@ function HintPill() {
   const t = useT();
   const tool = useStore((s) => s.tool);
   const hover = useStore((s) => (s.tool === 'build' ? s.hover : null));
+  const hoverBrickId = useStore((s) => (s.tool !== 'build' ? (s.hover?.brickId ?? null) : null));
+  useStore((s) => s.modelVersion); // 积木被上色等修改后同步刷新名称
+  const hovered = hoverBrickId !== null ? model.get(hoverBrickId) : undefined;
   const lang = useLang();
   return (
     <div className="anim-fade hidden items-center gap-2 rounded-full bg-panel px-3.5 py-1.5 text-[12px] text-ink-2 shadow-sm ring-1 ring-line backdrop-blur-md md:flex">
@@ -158,6 +161,12 @@ function HintPill() {
           )}
         >
           x {hover.x} · z {hover.z} · {lang === 'zh' ? `高 ${hover.y} 板` : `y ${hover.y}`}
+        </span>
+      )}
+      {hovered && (
+        <span className="flex items-center gap-1.5 rounded-full bg-panel-2 px-2 py-0.5 text-[11px] text-ink ring-1 ring-line">
+          <span className="h-2 w-2 rounded-full" style={{ background: getColor(hovered.color).hex }} />
+          {getPart(hovered.part).name[lang]} · {colorName(hovered.color, lang)}
         </span>
       )}
     </div>
