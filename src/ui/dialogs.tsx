@@ -249,15 +249,17 @@ export function ExportDialog() {
   const version = useStore((s) => s.modelVersion);
   const [link, setLink] = useState('');
   const [copied, setCopied] = useState(false);
+  // 从本地文件（file://）打开时没有可分享的网址
+  const canShare = location.protocol.startsWith('http');
   useEffect(() => {
-    if (!open || __ARTIFACT__) return;
+    if (!open || !canShare) return;
     setCopied(false);
     let alive = true;
     void makeShareLink().then((l) => alive && setLink(l));
     return () => {
       alive = false;
     };
-  }, [open, version]);
+  }, [open, version, canShare]);
   const copy = async () => {
     try {
       await navigator.clipboard.writeText(link);
@@ -274,7 +276,7 @@ export function ExportDialog() {
   };
   return (
     <Dialog open={open} onClose={close} title={t('export.title')} icon={<Share2 size={17} />} width={640}>
-      {!__ARTIFACT__ && (
+      {canShare && (
       <div className="mb-4 rounded-2xl bg-gradient-to-br from-accent-soft to-transparent p-4 ring-1 ring-line">
         <div className="mb-1 flex items-center gap-2 text-[13.5px] font-semibold">
           <Link size={16} className="text-accent" /> {t('export.share')}

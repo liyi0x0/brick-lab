@@ -4,18 +4,17 @@ import react from '@vitejs/plugin-react';
 import tailwindcss from '@tailwindcss/vite';
 
 export default defineConfig(({ mode }) => {
-  const artifact = mode === 'artifact';
+  const single = mode === 'single';
   return {
     base: './',
     plugins: [react(), tailwindcss()],
-    define: { __ARTIFACT__: JSON.stringify(artifact) },
     build: {
       target: 'es2022',
       chunkSizeWarningLimit: 1500,
-      ...(artifact
+      ...(single
         ? {
-            // 单文件演示版：所有代码打成一个模块，随后内联进 HTML
-            outDir: 'dist-artifact',
+            // 单文件版：所有代码打成一个模块，随后由 scripts/build-single.mjs 内联进 HTML
+            outDir: 'dist-single',
             cssCodeSplit: false,
             modulePreload: false,
             assetsInlineLimit: 100_000_000,

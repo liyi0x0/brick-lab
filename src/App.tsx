@@ -12,7 +12,6 @@ import { ConfirmDialog } from './ui/ConfirmDialog';
 import { HelpDialog, ExportDialog, LibraryDialog, SettingsDialog } from './ui/dialogs';
 import { Dock } from './ui/Dock';
 import { DropZone } from './ui/DropZone';
-import { ExportPreview } from './ui/ExportPreview';
 import { MobileSheet, PartsPanel } from './ui/PartsPanel';
 import { PlaybackBar } from './ui/PlaybackBar';
 import { IconButton, TooltipLayer } from './ui/primitives';
@@ -148,7 +147,6 @@ export default function App() {
       <WelcomeDialog />
       <DropZone />
       <ConfirmDialog />
-      {__ARTIFACT__ && <ExportPreview />}
       <TooltipLayer />
     </div>
   );

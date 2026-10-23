@@ -274,16 +274,6 @@ function safeName(name: string) {
 }
 
 export function download(filename: string, data: Blob | string, mime = 'application/octet-stream') {
-  if (__ARTIFACT__) {
-    // 演示版运行在禁止下载的沙箱里：改为在页面内展示内容，可复制或另存图片
-    if (typeof data === 'string') useStore.setState({ exportPreview: { file: filename, text: data } });
-    else {
-      const reader = new FileReader();
-      reader.onload = () => useStore.setState({ exportPreview: { file: filename, image: String(reader.result) } });
-      reader.readAsDataURL(data);
-    }
-    return;
-  }
   const blob = typeof data === 'string' ? new Blob([data], { type: mime }) : data;
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
