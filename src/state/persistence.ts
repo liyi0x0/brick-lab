@@ -1,7 +1,7 @@
 import { createStore, del, get, set, type UseStore } from 'idb-keyval';
 import { decodeShare, parseProjectFile, toProjectFile, type ProjectData, type ProjectFile } from '../core/serialize';
 import { tr } from '../i18n';
-import { currentProjectData, openProject } from './actions';
+import { currentProjectData, onBeforeProjectSwitch, openProject } from './actions';
 import { getEngine } from './engineRef';
 import { model, newProjectId, useStore } from './store';
 
@@ -115,22 +115,30 @@ function makeThumb(): string | undefined {
 
 /** 保存当前作品；thumb=true 时强制刷新缩略图 */
 export async function saveCurrent(opts: { thumb?: boolean } = {}) {
-  const s = useStore.getState();
-  const p = s.project;
+  const p = useStore.getState().project;
   const data = currentProjectData();
-  const existing = (await kvGet<LibraryEntry[]>(INDEX_KEY))?.find((e) => e.id === p.id);
-  if (!existing && data.bricks.length === 0) return;
   const now = Date.now();
   let thumb: string | undefined;
-  if (opts.thumb || lastThumbProject !== p.id || now - lastThumb > 12000 || !existing?.thumb) {
+  if (opts.thumb || lastThumbProject !== p.id || now - lastThumb > 12000) {
     thumb = makeThumb();
     lastThumb = now;
     lastThumbProject = p.id;
   }
+  await writeSnapshot({ ...p }, data, thumb);
+}
+
+/** 把一份作品快照写入库中（与当前状态无关，可在切换作品前同步捕获） */
+async function writeSnapshot(
+  p: { id: string; name: string; createdAt: number },
+  data: ReturnType<typeof currentProjectData>,
+  thumb?: string,
+) {
+  const existing = (await kvGet<LibraryEntry[]>(INDEX_KEY))?.find((e) => e.id === p.id);
+  if (!existing && data.bricks.length === 0) return;
+  if (!thumb && !existing?.thumb && data.bricks.length) thumb = makeThumb();
   const file: ProjectFile = toProjectFile(data, data.bricks);
   await kvSet(`p:${p.id}`, file);
-  await upsertEntry({ id: p.id, name: p.name, createdAt: p.createdAt, updatedAt: now, count: data.bricks.length, thumb });
-  setCurrentId(p.id);
+  await upsertEntry({ id: p.id, name: p.name, createdAt: p.createdAt, updatedAt: Date.now(), count: data.bricks.length, thumb });
 }
 
 export async function loadProject(id: string): Promise<{ data: ProjectData; entry: LibraryEntry } | null> {
@@ -203,6 +211,14 @@ function schedule() {
 
 /** 自动保存：模型或作品信息变化后延迟写入 IndexedDB */
 export function startAutosave(): () => void {
+  // 切换作品前：若有未保存的修改，立即捕获旧作品的快照再写入
+  const offSwitch = onBeforeProjectSwitch(() => {
+    if (!pending) return;
+    pending = false;
+    window.clearTimeout(timer);
+    const p = { ...useStore.getState().project };
+    void writeSnapshot(p, currentProjectData(), makeThumb());
+  });
   const unsubModel = model.subscribe((e) => {
     if (e.type === 'reset') {
       setCurrentId(useStore.getState().project.id);
@@ -219,6 +235,7 @@ export function startAutosave(): () => void {
   document.addEventListener('visibilitychange', onHide);
   window.addEventListener('pagehide', onHide);
   return () => {
+    offSwitch();
     unsubModel();
     unsubStore();
     document.removeEventListener('visibilitychange', onHide);

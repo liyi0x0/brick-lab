@@ -154,7 +154,8 @@ export class Engine {
     };
     this.controls.touches = { ONE: THREE.TOUCH.ROTATE, TWO: THREE.TOUCH.DOLLY_PAN };
     this.controls.addEventListener('change', () => this.invalidate());
-    this.controls.addEventListener('start', () => this.interaction.onCameraStart());
+    // 滚轮缩放结束后刷新放置预览（相机移动后光标下的位置变了）
+    this.controls.addEventListener('end', () => this.interaction.refresh());
 
     this.setView('home', false);
 

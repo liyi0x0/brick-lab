@@ -198,11 +198,6 @@ export class Interaction {
     this.engine.invalidate();
   };
 
-  /** 相机开始被拖动（含滚轮） */
-  onCameraStart() {
-    /* 由 onMove 判断拖动阈值后处理 */
-  }
-
   private abortGesture() {
     if (this.move) this.cancelMove();
     this.marquee.style.display = 'none';

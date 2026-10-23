@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, type ReactNode } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
 import {
   Check,
   Copy,
@@ -458,9 +458,4 @@ export function LibraryDialog() {
       {list && list.length === 0 && <p className="mt-6 text-center text-[12.5px] text-ink-3">{t('library.empty')}</p>}
     </Dialog>
   );
-}
-
-export function useBaseplateLabel() {
-  const size = useStore((s) => s.project.baseplateSize);
-  return useMemo(() => `${size}×${size}`, [size]);
 }

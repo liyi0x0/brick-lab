@@ -222,8 +222,17 @@ export function currentProjectData(): ProjectData & { bricks: Brick[] } {
   };
 }
 
+const beforeSwitch = new Set<() => void>();
+
+/** 在切换作品之前同步调用（用于保存尚未落盘的修改） */
+export function onBeforeProjectSwitch(fn: () => void) {
+  beforeSwitch.add(fn);
+  return () => beforeSwitch.delete(fn);
+}
+
 /** 载入一份作品数据，成为当前作品 */
 export function openProject(data: ProjectData, meta: { id?: string; createdAt?: number } = {}) {
+  beforeSwitch.forEach((fn) => fn());
   useStore.setState((s) => ({
     project: {
       id: meta.id ?? newProjectId(),

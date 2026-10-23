@@ -109,6 +109,7 @@ export function ColorPalette({ compact }: { compact?: boolean }) {
   const lang = useLang();
   const colorId = useStore((s) => s.colorId);
   const setColor = useStore((s) => s.setColor);
+  const recent = useStore((s) => s.recentColors);
   const groups: { key: 'solid' | 'trans' | 'metal'; label: string }[] = [
     { key: 'solid', label: t('color.solid') },
     { key: 'metal', label: t('color.metal') },
@@ -133,6 +134,16 @@ export function ColorPalette({ compact }: { compact?: boolean }) {
             />
             {colorName(colorId, lang)}
           </span>
+        </div>
+      )}
+      {recent.length >= 2 && (
+        <div className="flex flex-col gap-1.5">
+          <span className="text-[11px] text-ink-3">{t('panel.recent')}</span>
+          <div className="flex flex-wrap gap-x-1.5 gap-y-1.5">
+            {recent.map((id) => (
+              <Swatch key={id} color={getColor(id)} active={id === colorId} onClick={() => pick(id)} />
+            ))}
+          </div>
         </div>
       )}
       {groups.map((g) => (
