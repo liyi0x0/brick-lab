@@ -421,6 +421,8 @@ export class Interaction {
     for (const i of sel) this.engine.bricks.setHidden(i, true);
     this.engine.ghost.setGroup(bricks, `move:${sel.join(',')}:${model.version}`);
     this.engine.ghost.showGroup(0, 0, 0, true);
+    this.engine.hideSelectionBox = true;
+    this.engine.updateSelectionBox();
     this.setHover(null);
     d.mode = 'move';
     this.engine.invalidateShadows();
@@ -458,6 +460,8 @@ export class Interaction {
     this.move = null;
     for (const i of mv.ids) this.engine.bricks.setHidden(i, false);
     this.engine.ghost.clearGroup();
+    this.engine.hideSelectionBox = false;
+    this.engine.updateSelectionBox();
     const [dx, dy, dz] = mv.offset;
     if (dx === 0 && dy === 0 && dz === 0) {
       this.engine.invalidateShadows();
@@ -481,6 +485,8 @@ export class Interaction {
     this.move = null;
     for (const i of mv.ids) this.engine.bricks.setHidden(i, false);
     this.engine.ghost.clearGroup();
+    this.engine.hideSelectionBox = false;
+    this.engine.updateSelectionBox();
     this.engine.invalidateShadows();
   }
 

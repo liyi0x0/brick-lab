@@ -15,8 +15,13 @@ function patchTint(mat: THREE.Material) {
       .replace(
         '#include <tonemapping_fragment>',
         `if (vTint.a > 0.001) {
-          float fres = pow(1.0 - clamp(abs(dot(normal, normalize(vViewPosition))), 0.0, 1.0), 2.0);
-          gl_FragColor.rgb = mix(gl_FragColor.rgb, vTint.rgb, clamp(vTint.a * (0.32 + 0.9 * fres), 0.0, 1.0));
+          // a ≤ 1：仅边缘光（保持积木本色）；a > 1：额外整体着色（a-1 为着色强度）
+          float rim = min(vTint.a, 1.0);
+          float fill = clamp(vTint.a - 1.0, 0.0, 1.0);
+          float fres = pow(1.0 - clamp(abs(dot(normal, normalize(vViewPosition))), 0.0, 1.0), 2.2);
+          vec3 c = mix(gl_FragColor.rgb, vTint.rgb, fill * 0.6);
+          c = mix(c, vTint.rgb, clamp(rim * fres * 1.15, 0.0, 1.0));
+          gl_FragColor.rgb = c + vTint.rgb * rim * 0.07;
         }
         #include <tonemapping_fragment>`,
       );

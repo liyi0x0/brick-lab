@@ -471,7 +471,7 @@ function buildSlope(mb: MeshBuilder, part: PartDef, run: number, inverted: boole
   const z0 = -part.d / 2 + GAP;
   const z1 = part.d / 2 - GAP;
   const zf = -part.d / 2 + (part.d - run);
-  const lip = 0.16;
+  const lip = 0.2; // 官方斜坡前沿 4 LDU
   // 截面在 (z, y) 平面
   const poly: V2[] = inverted
     ? [
@@ -498,13 +498,15 @@ function buildRound(mb: MeshBuilder, part: PartDef, profile: 'cylinder' | 'cone'
   const R = part.w > 1 ? part.w / 2 + 0.008 : part.w / 2 - GAP;
   const b = 0.02;
   if (profile === 'cone') {
+    // 官方圆锥：底部 5 LDU 竖直，之后收窄到顶部半径约 6.5 LDU
+    const top = 0.325;
     const segs: LatheSeg[] = [
       { p0: [0, 0], p1: [R - b, 0], n0: [0, -1], n1: [0, -1] },
       lflat([R - b, 0], [R, b]),
-      lflat([R, b], [R, 0.12]),
-      lflat([R, 0.12], [STUD_R + 0.02, H - 0.04]),
-      lflat([STUD_R + 0.02, H - 0.04], [STUD_R + 0.02, H]),
-      { p0: [STUD_R + 0.02, H], p1: [0, H], n0: [0, 1], n1: [0, 1] },
+      lflat([R, b], [R, 0.25]),
+      lflat([R, 0.25], [top, H - 0.02]),
+      { p0: [top, H - 0.02], p1: [top - 0.02, H], n0: [0.7, 0.7], n1: [0, 1] },
+      { p0: [top - 0.02, H], p1: [0, H], n0: [0, 1], n1: [0, 1] },
     ];
     lathe(mb, segs, 0, 0, 0, 28);
   } else {

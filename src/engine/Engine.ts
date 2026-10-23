@@ -15,18 +15,20 @@ import { brickMatrix, BrickRenderer } from './bricks';
 import { Ghost } from './ghost';
 import { Interaction } from './interaction';
 import { BrickMaterials } from './materials';
+import { SelectionOutline } from './outline';
+import { SelectionBox } from './selectionBox';
 import { sound } from './sound';
 
 export type ViewPreset = 'home' | 'top' | 'front' | 'right' | 'back' | 'left';
 
 /** 高亮颜色（线性 RGB + 强度） */
 export const TINT = {
-  select: [0.16, 0.42, 1.0, 0.62] as const,
-  selectHover: [0.3, 0.58, 1.0, 0.8] as const,
-  hover: [1, 1, 1, 0.35] as const,
-  erase: [1.0, 0.16, 0.12, 0.85] as const,
-  paint: [1, 1, 1, 0.22] as const,
-  step: [1.0, 0.8, 0.2, 0.55] as const,
+  select: [0.6, 0.75, 1.0, 0.3] as const,
+  selectHover: [0.7, 0.85, 1.0, 0.65] as const,
+  hover: [1, 1, 1, 0.7] as const,
+  erase: [1.0, 0.12, 0.08, 1.85] as const,
+  paint: [1, 1, 1, 0.5] as const,
+  step: [1.0, 0.8, 0.25, 0.9] as const,
 };
 
 interface CameraTween {
@@ -50,6 +52,10 @@ export class Engine {
   readonly bricks: BrickRenderer;
   readonly baseplate: Baseplate;
   readonly ghost = new Ghost();
+  readonly selectionBox = new SelectionBox();
+  readonly outline = new SelectionOutline();
+  /** 拖动积木时隐藏选区框 */
+  hideSelectionBox = false;
   readonly animator: Animator;
   readonly interaction: Interaction;
   readonly container: HTMLElement;
@@ -66,6 +72,9 @@ export class Engine {
   private hiddenIds = new Set<number>();
   private stepHighlight: number | null = null;
   private envTexture: THREE.Texture;
+  /** 被界面面板遮挡的左右宽度（像素），用于把画面中心移到可见区域中央 */
+  private insetLeft = 0;
+  private insetRight = 0;
   private composer: EffectComposer | null = null;
   private aoPass: N8AOPass | null = null;
   private bgTexture: THREE.CanvasTexture | null = null;
@@ -123,6 +132,8 @@ export class Engine {
     this.animator = new Animator(this.bricks);
     this.scene.add(this.animator.group);
     this.scene.add(this.ghost.group);
+    this.scene.add(this.selectionBox.object);
+    this.scene.add(this.outline.group);
 
     // 交互监听必须先于 OrbitControls 注册，以便在拖动积木时禁用相机
     this.interaction = new Interaction(this);
@@ -222,13 +233,32 @@ export class Engine {
     const w = Math.max(1, this.container.clientWidth);
     const h = Math.max(1, this.container.clientHeight);
     this.renderer.setSize(w, h, false);
+    this.selectionBox.setResolution(w, h);
+    this.outline.setProjection(this.camera.fov, h);
     if (this.composer) {
       this.composer.setPixelRatio(this.renderer.getPixelRatio());
       this.composer.setSize(w, h);
     }
     this.camera.aspect = w / h;
-    this.camera.updateProjectionMatrix();
+    this.applyViewOffset();
     this.invalidate();
+  }
+
+  setViewInset(left: number, right: number) {
+    if (left === this.insetLeft && right === this.insetRight) return;
+    this.insetLeft = left;
+    this.insetRight = right;
+    this.applyViewOffset();
+    this.invalidate();
+  }
+
+  private applyViewOffset() {
+    const w = Math.max(1, this.container.clientWidth);
+    const h = Math.max(1, this.container.clientHeight);
+    const dx = (this.insetLeft - this.insetRight) / 2;
+    if (Math.abs(dx) < 1 || w < 768) this.camera.clearViewOffset();
+    else this.camera.setViewOffset(w, h, -dx, 0, w, h);
+    this.camera.updateProjectionMatrix();
   }
 
   /** 背景渐变与地面阴影随主题变化 */
@@ -252,6 +282,8 @@ export class Engine {
     this.bgTexture = tex;
     this.scene.background = tex;
     (this.baseplate.ground.material as THREE.ShadowMaterial).opacity = dark ? 0.35 : 0.16;
+    this.selectionBox.setColor(dark ? '#6f9bff' : '#2f6bff');
+    this.outline.setColor(dark ? '#6f9bff' : '#2f6bff');
     this.invalidate();
   };
 
@@ -406,7 +438,31 @@ export class Engine {
       else if (s.tool === 'paint') next.set(h, TINT.paint);
     }
     this.bricks.applyTints(next);
+    this.updateSelectionBox();
     this.invalidate();
+  }
+
+  /** 选区的描边与折角框 */
+  updateSelectionBox() {
+    const ids = useStore.getState().selection;
+    if (!ids.length || this.hideSelectionBox || this.isPlayback) {
+      this.selectionBox.update(null);
+      this.outline.update([]);
+      return;
+    }
+    const box = new THREE.Box3();
+    const tmp = new THREE.Box3();
+    const m = new THREE.Matrix4();
+    const bricks = [];
+    for (const id of ids) {
+      const b = model.get(id);
+      if (!b) continue;
+      bricks.push(b);
+      const bb = this.bricks.geometryBox(b.part);
+      if (bb) box.union(tmp.copy(bb).applyMatrix4(brickMatrix(b, m)));
+    }
+    this.outline.update(bricks);
+    this.selectionBox.update(box.isEmpty() ? null : box.expandByScalar(0.09));
   }
 
   private updateShadowBounds() {
@@ -524,7 +580,9 @@ export class Engine {
 
   private fitDistance(radius: number) {
     const fov = THREE.MathUtils.degToRad(this.camera.fov);
-    const fovH = 2 * Math.atan(Math.tan(fov / 2) * this.camera.aspect);
+    const w = Math.max(1, this.container.clientWidth);
+    const free = this.camera.view?.enabled ? Math.max(0.3, (w - this.insetLeft - this.insetRight) / w) : 1;
+    const fovH = 2 * Math.atan(Math.tan(fov / 2) * this.camera.aspect * free);
     const f = Math.min(fov, fovH);
     return Math.max(this.controls?.minDistance ?? 2, (radius / Math.sin(f / 2)) * 1.08);
   }
@@ -544,6 +602,15 @@ export class Engine {
     const dir = this.camera.position.clone().sub(this.controls.target).normalize();
     const dist = this.fitDistance(Math.max(sphere.radius, 2.5));
     this.moveCamera(sphere.center.clone().addScaledVector(dir, dist), sphere.center, true);
+  }
+
+  /** 键盘环绕：水平 / 垂直旋转视角（弧度） */
+  orbit(dAzimuth: number, dPolar: number) {
+    const off = this.camera.position.clone().sub(this.controls.target);
+    const sph = new THREE.Spherical().setFromVector3(off);
+    sph.theta += dAzimuth;
+    sph.phi = THREE.MathUtils.clamp(sph.phi + dPolar, 0.05, this.controls.maxPolarAngle);
+    this.moveCamera(this.controls.target.clone().add(new THREE.Vector3().setFromSpherical(sph)), this.controls.target.clone(), true, 260);
   }
 
   zoom(factor: number) {
@@ -630,21 +697,29 @@ export class Engine {
   /**
    * 以指定尺寸渲染当前视角并返回 dataURL。transparent 时输出透明背景（不含环境光遮蔽）。
    */
-  capture(width: number, height: number, opts: { transparent?: boolean; type?: string; quality?: number } = {}): string {
+  capture(
+    width: number,
+    height: number,
+    opts: { transparent?: boolean; type?: string; quality?: number; fast?: boolean } = {},
+  ): string {
     const r = this.renderer;
     const prevRatio = r.getPixelRatio();
     const prevSize = r.getSize(new THREE.Vector2());
     const ghostVisible = this.ghost.group.visible;
+    const boxVisible = this.selectionBox.object.visible;
     this.ghost.group.visible = false;
+    this.selectionBox.object.visible = false;
+    this.outline.group.visible = false;
     const tints = this.bricks.suspendTints();
     const prevBg = this.scene.background;
     if (opts.transparent) this.scene.background = null;
     r.setPixelRatio(1);
     r.setSize(width, height, false);
     this.camera.aspect = width / height;
+    this.camera.clearViewOffset();
     this.camera.updateProjectionMatrix();
     r.shadowMap.needsUpdate = true;
-    const useComposer = this.composer && !opts.transparent;
+    const useComposer = this.composer && !opts.transparent && !opts.fast;
     if (useComposer) {
       this.composer!.setPixelRatio(1);
       this.composer!.setSize(width, height);
@@ -657,14 +732,16 @@ export class Engine {
     this.scene.background = prevBg;
     this.bricks.restoreTints(tints);
     this.ghost.group.visible = ghostVisible;
+    this.selectionBox.object.visible = boxVisible;
+    this.outline.group.visible = true;
     r.setPixelRatio(prevRatio);
     r.setSize(prevSize.x, prevSize.y, false);
-    if (this.composer) {
-      this.composer.setPixelRatio(prevRatio);
-      this.composer.setSize(prevSize.x, prevSize.y);
+    if (useComposer) {
+      this.composer!.setPixelRatio(prevRatio);
+      this.composer!.setSize(prevSize.x, prevSize.y);
     }
     this.camera.aspect = prevSize.x / prevSize.y;
-    this.camera.updateProjectionMatrix();
+    this.applyViewOffset();
     this.invalidateShadows();
     return url;
   }
@@ -681,7 +758,7 @@ export class Engine {
     this.camera.position.copy(sphere.center).addScaledVector(dir, dist);
     this.camera.lookAt(sphere.center);
     this.camera.aspect = prevAspect;
-    const url = this.capture(width, height, { type: 'image/jpeg', quality: 0.86 });
+    const url = this.capture(width, height, { type: 'image/jpeg', quality: 0.86, fast: true });
     this.camera.position.copy(saved.pos);
     this.camera.lookAt(saved.target);
     this.controls.target.copy(saved.target);

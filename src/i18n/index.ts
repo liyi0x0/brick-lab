@@ -62,6 +62,7 @@ const zh = {
   'menu.help': '帮助与快捷键',
   'menu.templates': '示例作品',
   'menu.clear': '清空作品',
+  'menu.more': '更多',
 
   'stats.bricks': '块积木',
   'stats.size': '尺寸',
@@ -271,6 +272,7 @@ const en: Dict = {
   'menu.help': 'Help & shortcuts',
   'menu.templates': 'Examples',
   'menu.clear': 'Clear creation',
+  'menu.more': 'More',
 
   'stats.bricks': 'bricks',
   'stats.size': 'Size',

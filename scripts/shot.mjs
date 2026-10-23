@@ -10,7 +10,7 @@ const browser = await chromium.launch({
   headless: true,
   args: ['--use-angle=metal', '--enable-gpu', '--ignore-gpu-blocklist'],
 });
-const page = await browser.newPage({ viewport: { width, height }, deviceScaleFactor: 2 });
+const page = await browser.newPage({ viewport: { width, height }, deviceScaleFactor: 2, locale: process.env.LOCALE || 'zh-CN', colorScheme: process.env.SCHEME || 'light' });
 const logs = [];
 page.on('console', (m) => logs.push(`[${m.type()}] ${m.text()}`));
 page.on('pageerror', (e) => logs.push(`[pageerror] ${e.message}`));

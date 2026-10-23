@@ -84,7 +84,7 @@ for (const [w, d, ldraw, code] of bricks) {
 // ---------- 薄板 ----------
 const plates: [number, number, string, number][] = [
   [1, 1, '3024', 20],
-  [2, 1, '3023', 21],
+  [2, 1, '3023b', 21],
   [3, 1, '3623', 22],
   [4, 1, '3710', 23],
   [6, 1, '3666', 24],
@@ -147,8 +147,8 @@ const slopes: [string, number, number, number, boolean, string, number, string, 
   ['slope45-2x4', 4, 2, 1, false, '3037', 63, '斜坡 45° 2×4', 'Slope 45° 2×4'],
   ['slope33-3x1', 1, 3, 2, false, '4286', 64, '斜坡 33° 3×1', 'Slope 33° 3×1'],
   ['slope33-3x2', 2, 3, 2, false, '3298', 65, '斜坡 33° 3×2', 'Slope 33° 3×2'],
-  ['slope45inv-2x1', 1, 2, 1, true, '3665', 66, '反斜坡 45° 2×1', 'Inverted Slope 45° 2×1'],
-  ['slope45inv-2x2', 2, 2, 1, true, '3660', 67, '反斜坡 45° 2×2', 'Inverted Slope 45° 2×2'],
+  ['slope45inv-2x1', 1, 2, 1, true, '3665b', 66, '反斜坡 45° 2×1', 'Inverted Slope 45° 2×1'],
+  ['slope45inv-2x2', 2, 2, 1, true, '3660b', 67, '反斜坡 45° 2×2', 'Inverted Slope 45° 2×2'],
 ];
 for (const [id, w, d, run, inverted, ldraw, code, zh, en] of slopes) {
   def({
@@ -179,7 +179,8 @@ def({
 def({
   id: 'round-plate-1x1',
   code: 81,
-  ldraw: '4073',
+  ldraw: '6141',
+  bricklink: '4073',
   name: { zh: '圆板 1×1', en: 'Round Plate 1×1' },
   category: 'round',
   w: 1,
@@ -201,7 +202,8 @@ def({
 def({
   id: 'round-brick-2x2',
   code: 83,
-  ldraw: '3941',
+  ldraw: '6143',
+  bricklink: '3941',
   name: { zh: '圆砖 2×2', en: 'Round Brick 2×2' },
   category: 'round',
   w: 2,
@@ -212,7 +214,8 @@ def({
 def({
   id: 'round-plate-2x2',
   code: 84,
-  ldraw: '4032',
+  ldraw: '4032b',
+  bricklink: '4032',
   name: { zh: '圆板 2×2', en: 'Round Plate 2×2' },
   category: 'round',
   w: 2,
@@ -234,7 +237,8 @@ def({
 def({
   id: 'cone-1x1',
   code: 86,
-  ldraw: '4589',
+  ldraw: '59900',
+  bricklink: '4589b',
   name: { zh: '圆锥 1×1', en: 'Cone 1×1' },
   category: 'round',
   w: 1,
@@ -320,6 +324,11 @@ export function getPart(id: string): PartDef {
   const p = byId.get(id);
   if (!p) throw new Error(`Unknown part: ${id}`);
   return p;
+}
+
+/** BrickLink 编号：默认去掉 LDraw 文件名中表示模具版本的字母后缀 */
+export function bricklinkId(p: PartDef): string {
+  return p.bricklink ?? p.ldraw.replace(/[a-z]$/, '');
 }
 
 export function findPart(id: string): PartDef | undefined {
