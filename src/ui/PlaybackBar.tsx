@@ -89,7 +89,7 @@ function Player() {
   };
 
   return (
-    <div className="pointer-events-none absolute inset-x-0 bottom-3 z-20 flex justify-center px-2">
+    <div className="pointer-events-none edge-b absolute inset-x-0 z-20 flex justify-center px-4">
       <div className="glass anim-up pointer-events-auto flex w-full max-w-[640px] flex-col gap-2 rounded-[22px] px-4 pt-3 pb-2.5">
         <div className="flex items-center gap-3">
           <span className="text-[13px] font-semibold">{t('playback.title')}</span>

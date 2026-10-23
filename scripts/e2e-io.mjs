@@ -20,7 +20,10 @@ page.on('console', (m) => m.type() === 'error' && errors.push(m.text()));
 try {
   await page.goto(url, { waitUntil: 'networkidle' });
   await page.waitForTimeout(600);
-  await page.evaluate(() => window.__store.getState().openDialog(null));
+  await page.evaluate(() => {
+    window.__store.getState().openDialog(null);
+    window.__actions.newProject();
+  });
   // 1. 搭一个小作品
   await page.evaluate(() => {
     const B = (part, color, x, y, z, rot = 0) => ({ part, color, x, y, z, rot });

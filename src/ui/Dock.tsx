@@ -145,9 +145,21 @@ function PasteBar() {
 function HintPill() {
   const t = useT();
   const tool = useStore((s) => s.tool);
+  const hover = useStore((s) => (s.tool === 'build' ? s.hover : null));
+  const lang = useLang();
   return (
-    <div className="anim-fade hidden rounded-full bg-panel px-3.5 py-1.5 text-[12px] text-ink-2 shadow-sm ring-1 ring-line backdrop-blur-md md:block">
-      {t(`hint.${tool}` as TKey)}
+    <div className="anim-fade hidden items-center gap-2 rounded-full bg-panel px-3.5 py-1.5 text-[12px] text-ink-2 shadow-sm ring-1 ring-line backdrop-blur-md md:flex">
+      <span>{t(`hint.${tool}` as TKey)}</span>
+      {hover && (
+        <span
+          className={cx(
+            'rounded-full px-2 py-0.5 font-mono text-[11px] tabular-nums',
+            hover.valid ? 'bg-accent-soft text-accent' : 'bg-danger-soft text-danger',
+          )}
+        >
+          x {hover.x} · z {hover.z} · {lang === 'zh' ? `高 ${hover.y} 板` : `y ${hover.y}`}
+        </span>
+      )}
     </div>
   );
 }
@@ -158,7 +170,7 @@ export function Dock() {
   const pasting = useStore((s) => s.pasting);
   const hints = useStore((s) => s.settings.hints);
   return (
-    <div className="pointer-events-none absolute inset-x-0 bottom-3 z-20 flex flex-col items-center gap-2 px-2 pb-[env(safe-area-inset-bottom)]">
+    <div className="pointer-events-none edge-b absolute inset-x-0 z-20 flex flex-col items-center gap-2 px-2">
       <div className="pointer-events-auto">
         {pasting ? <PasteBar /> : hasSelection ? <SelectionBar /> : hints ? <HintPill /> : null}
       </div>

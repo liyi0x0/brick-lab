@@ -35,7 +35,7 @@ export function StatsCard() {
       data-tip={t('stats.partsList')}
       data-tip-side="left"
       className={cx(
-        'glass absolute top-[72px] right-3 z-10 hidden items-center gap-3 rounded-2xl py-2 pr-2.5 pl-3.5 text-left transition-all hover:brightness-[1.02] md:flex',
+        'glass below-bar edge-r absolute z-10 hidden items-center gap-3 rounded-2xl py-2 pr-2.5 pl-3.5 text-left transition-all hover:brightness-[1.02] md:flex',
         bomOpen && 'ring-2 ring-accent',
       )}
     >
@@ -65,7 +65,7 @@ export function BomPanel() {
   const rows = useMemo(() => buildBom(bricks), [bricks]);
   if (!open) return null;
   return (
-    <aside className="glass anim-right absolute top-[136px] right-3 bottom-3 z-10 flex w-[320px] flex-col overflow-hidden rounded-[20px] md:bottom-[300px] lg:bottom-3 lg:right-16">
+    <aside className="glass anim-right below-stats edge-r edge-b bom-panel absolute z-10 flex w-[320px] flex-col overflow-hidden rounded-[20px]">
       <div className="flex items-center gap-2 px-4 pt-3 pb-2">
         <div className="flex-1">
           <div className="text-[14px] font-semibold">{t('bom.title')}</div>

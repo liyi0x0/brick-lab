@@ -14,8 +14,11 @@ page.on('console', (m) => m.type() === 'error' && errors.push(m.text()));
 page.on('pageerror', (e) => errors.push(e.message));
 await page.goto(url, { waitUntil: 'networkidle' });
 await page.waitForTimeout(800);
-// 关闭首次打开时的欢迎对话框
-await page.evaluate(() => window.__store.getState().openDialog(null));
+// 关闭首次打开时的欢迎对话框，并从空白底板开始
+await page.evaluate(() => {
+  window.__store.getState().openDialog(null);
+  window.__actions.newProject();
+});
 
 let step = 0;
 const shot = async (name) => {

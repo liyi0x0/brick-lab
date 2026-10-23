@@ -28,7 +28,35 @@
   --backdrop: rgba(15, 23, 42, 0.28);
 }
 
-[data-theme='dark'] {
+/* 未显式选择主题时跟随系统；显式选择时由 <html data-theme> 决定 */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) {
+    color-scheme: dark;
+    --bg-top: #222a38;
+    --bg-bottom: #0f131b;
+    --panel: rgba(24, 29, 40, 0.9);
+    --panel-solid: #1a202c;
+    --panel-2: rgba(36, 43, 57, 0.9);
+    --line: rgba(255, 255, 255, 0.07);
+    --line-2: rgba(255, 255, 255, 0.13);
+    --ink: #eef2f8;
+    --ink-2: #a9b4c6;
+    --ink-3: #6b778c;
+    --hover: rgba(255, 255, 255, 0.06);
+    --press: rgba(255, 255, 255, 0.1);
+    --accent: #5b8cff;
+    --accent-ink: #ffffff;
+    --accent-soft: rgba(91, 140, 255, 0.18);
+    --danger: #f87171;
+    --danger-soft: rgba(248, 113, 113, 0.16);
+    --success: #4ade80;
+    --shadow-panel: 0 18px 40px -16px rgba(0, 0, 0, 0.6), 0 2px 8px rgba(0, 0, 0, 0.3);
+    --shadow-pop: 0 28px 70px -20px rgba(0, 0, 0, 0.75), 0 4px 14px rgba(0, 0, 0, 0.35);
+    --backdrop: rgba(0, 0, 0, 0.5);
+  }
+}
+
+:root[data-theme='dark'] {
   color-scheme: dark;
   --bg-top: #222a38;
   --bg-bottom: #0f131b;
@@ -129,6 +157,48 @@ button:disabled {
   border-radius: 4px;
   pointer-events: none;
   z-index: 5;
+}
+
+/* 贴边浮动元素：左右至少 16px，顶部底部避开刘海与手势条 */
+.edge-t {
+  top: max(12px, env(safe-area-inset-top, 0px));
+}
+.edge-b {
+  bottom: max(12px, env(safe-area-inset-bottom, 0px));
+}
+.edge-l {
+  left: max(16px, env(safe-area-inset-left, 0px));
+}
+.edge-r {
+  right: max(16px, env(safe-area-inset-right, 0px));
+}
+.below-bar {
+  top: calc(max(12px, env(safe-area-inset-top, 0px)) + 60px);
+}
+.below-stats {
+  top: calc(max(12px, env(safe-area-inset-top, 0px)) + 124px);
+}
+.mobile-parts-btn {
+  bottom: calc(max(12px, env(safe-area-inset-bottom, 0px)) + 74px);
+}
+.toasts {
+  top: calc(max(12px, env(safe-area-inset-top, 0px)) + 60px);
+}
+@media (min-width: 768px) {
+  .toasts {
+    top: auto;
+    bottom: calc(max(12px, env(safe-area-inset-bottom, 0px)) + 112px);
+  }
+  /* 中等宽度时零件清单让出右下角的视角控件 */
+  .bom-panel {
+    bottom: 300px;
+  }
+}
+@media (min-width: 1024px) {
+  .bom-panel {
+    bottom: max(12px, env(safe-area-inset-bottom, 0px));
+    right: calc(max(16px, env(safe-area-inset-right, 0px)) + 52px);
+  }
 }
 
 /* 毛玻璃面板 */

@@ -209,7 +209,7 @@ export function PartsPanel() {
   const [cat, setCat] = useState<'all' | PartCategory>('all');
   const setUI = useStore((s) => s.setUI);
   return (
-    <aside className="glass anim-up absolute top-[72px] bottom-3 left-3 z-10 flex w-[300px] flex-col overflow-hidden rounded-[20px]">
+    <aside className="glass anim-up below-bar edge-b edge-l absolute z-10 flex w-[300px] flex-col overflow-hidden rounded-[20px]">
       <div className="flex flex-col gap-2.5 px-3 pt-3 pb-2">
         <div className="flex items-center justify-between pl-1">
           <span className="text-[12px] font-semibold tracking-wide text-ink-2">{t('panel.parts')}</span>

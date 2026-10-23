@@ -6,7 +6,7 @@ export function Toasts() {
   const toasts = useStore((s) => s.toasts);
   const dismiss = useStore((s) => s.dismissToast);
   return (
-    <div className="pointer-events-none fixed inset-x-0 top-[72px] z-[60] flex flex-col items-center gap-2 px-3 md:top-auto md:bottom-[124px]">
+    <div className="toasts pointer-events-none fixed inset-x-0 z-[60] flex flex-col items-center gap-2 px-4">
       {toasts.map((t) => (
         <div
           key={t.id}

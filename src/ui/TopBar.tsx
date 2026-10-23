@@ -17,6 +17,7 @@ import { useT } from '../i18n';
 import { clearAll, newProject, pickFile, redo, undo } from '../state/actions';
 import { flushSave } from '../state/persistence';
 import { model, useStore } from '../state/store';
+import { askConfirm } from './ConfirmDialog';
 import { Logo } from './Logo';
 import { Button, cx, IconButton, Menu } from './primitives';
 
@@ -82,8 +83,8 @@ export function TopBar() {
   const canRedo = useStore((s) => s.canRedo);
   const openDialog = useStore((s) => s.openDialog);
 
-  const confirmThen = (msg: string, fn: () => void) => {
-    if (!model.count || window.confirm(msg)) fn();
+  const confirmThen = async (msg: string, fn: () => void, danger = false) => {
+    if (!model.count || (await askConfirm(msg, { danger }))) fn();
   };
 
   const menuItems = [
@@ -91,7 +92,7 @@ export function TopBar() {
       label: t('menu.new'),
       icon: <Plus size={16} />,
       onClick: () =>
-        confirmThen(t('confirm.new'), () => {
+        void confirmThen(t('confirm.new'), () => {
           void flushSave().then(newProject);
         }),
     },
@@ -107,20 +108,20 @@ export function TopBar() {
       label: t('menu.clear'),
       icon: <Trash size={16} />,
       danger: true,
-      onClick: () => confirmThen(t('confirm.clear'), clearAll),
+      onClick: () => void confirmThen(t('confirm.clear'), clearAll, true),
     },
   ];
 
   return (
     <>
-      <div className="glass absolute top-3 left-3 z-20 flex h-12 items-center gap-1.5 rounded-2xl pr-1.5 pl-2.5">
+      <div className="glass edge-t edge-l absolute z-20 flex h-12 items-center gap-1.5 rounded-2xl pr-1.5 pl-2.5">
         <Logo size={28} />
         <span className="hidden pr-1 text-[14px] font-semibold tracking-tight sm:inline">{t('app.name')}</span>
         <div className="mx-0.5 hidden h-5 w-px bg-line-2 sm:block" />
         <ProjectName />
       </div>
 
-      <div className="glass absolute top-3 right-3 z-20 flex h-12 items-center gap-0.5 rounded-2xl px-1.5">
+      <div className="glass edge-t edge-r absolute z-20 flex h-12 items-center gap-0.5 rounded-2xl px-1.5">
         <IconButton icon={<Undo2 size={18} />} label={t('action.undo')} shortcut="Mod+Z" disabled={!canUndo} onClick={undo} />
         <IconButton icon={<Redo2 size={18} />} label={t('action.redo')} shortcut="Mod+Shift+Z" disabled={!canRedo} onClick={redo} />
         <div className="mx-1 hidden h-5 w-px bg-line-2 sm:block" />

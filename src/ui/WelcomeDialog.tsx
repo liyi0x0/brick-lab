@@ -6,6 +6,7 @@ import { useLang, useT } from '../i18n';
 import { newProject, openProject } from '../state/actions';
 import { flushSave } from '../state/persistence';
 import { model, useStore } from '../state/store';
+import { askConfirm } from './ConfirmDialog';
 import { Logo } from './Logo';
 import { Dialog } from './primitives';
 
@@ -63,8 +64,9 @@ export function WelcomeDialog() {
     close();
   };
 
-  const pick = (tpl: Template) => {
-    if (model.count && !window.confirm(t('confirm.template'))) return;
+  const pick = async (tpl: Template) => {
+    // 当前画面就是未改动过的示例时无需确认
+    if (model.count && model.canUndo && !(await askConfirm(t('confirm.template')))) return;
     void flushSave().then(() => {
       openProject({
         name: tpl.name[useStore.getState().settings.lang],
@@ -116,7 +118,7 @@ export function WelcomeDialog() {
           <div className="mt-6 mb-3 text-[12px] font-semibold tracking-wide text-ink-2">{t('welcome.templates')}</div>
           <div className="grid grid-cols-2 gap-3 md:grid-cols-3">
             {TEMPLATES.map((tpl) => (
-              <TemplateCard key={tpl.id} tpl={tpl} onPick={() => pick(tpl)} />
+              <TemplateCard key={tpl.id} tpl={tpl} onPick={() => void pick(tpl)} />
             ))}
           </div>
         </div>

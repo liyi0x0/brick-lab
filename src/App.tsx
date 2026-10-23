@@ -1,14 +1,18 @@
 import { useEffect } from 'react';
 import { PanelLeftOpen, Shapes } from 'lucide-react';
+import { TEMPLATES } from './core/templates';
 import { thumbnailer } from './engine/thumbnails';
 import { useT } from './i18n';
+import { openProject } from './state/actions';
 import { getEngine } from './state/engineRef';
 import { installShortcuts } from './state/shortcuts';
 import { restoreSession, startAutosave } from './state/persistence';
 import { useStore } from './state/store';
+import { ConfirmDialog } from './ui/ConfirmDialog';
 import { HelpDialog, ExportDialog, LibraryDialog, SettingsDialog } from './ui/dialogs';
 import { Dock } from './ui/Dock';
 import { DropZone } from './ui/DropZone';
+import { ExportPreview } from './ui/ExportPreview';
 import { MobileSheet, PartsPanel } from './ui/PartsPanel';
 import { PlaybackBar } from './ui/PlaybackBar';
 import { IconButton, TooltipLayer } from './ui/primitives';
@@ -36,7 +40,7 @@ function useTheme() {
   }, [theme]);
   useEffect(() => {
     document.documentElement.lang = lang === 'zh' ? 'zh-CN' : 'en';
-    document.title = lang === 'zh' ? '积木工坊 · BrickLab' : 'BrickLab — 3D brick builder';
+    document.title = lang === 'zh' ? '积木工坊' : 'BrickLab';
   }, [lang]);
 }
 
@@ -66,7 +70,7 @@ function useViewInset() {
   useEffect(() => {
     const apply = () => {
       const desktop = window.innerWidth >= 768;
-      const left = desktop && leftOpen && !playback ? 312 : 0;
+      const left = desktop && leftOpen && !playback ? 320 : 0;
       const right = desktop && bomOpen && !playback ? (window.innerWidth >= 1024 ? 384 : 332) : 0;
       getEngine()?.setViewInset(left, right);
     };
@@ -89,7 +93,16 @@ export default function App() {
     const offKeys = installShortcuts();
     const offSave = startAutosave();
     void restoreSession().then((r) => {
-      if (r === 'empty') useStore.getState().openDialog('welcome');
+      if (r !== 'empty') return;
+      // 首次打开：先摆上一个示例作品，再弹出欢迎页，第一眼看到的就是真实的积木
+      const tpl = TEMPLATES[0];
+      openProject({
+        name: tpl.name[useStore.getState().settings.lang],
+        baseplateSize: tpl.baseplateSize,
+        baseplateColor: tpl.baseplateColor,
+        bricks: tpl.build(),
+      });
+      useStore.getState().openDialog('welcome');
     });
     return () => {
       offKeys();
@@ -107,7 +120,7 @@ export default function App() {
             {leftOpen ? (
               <PartsPanel />
             ) : (
-              <div className="glass absolute top-[72px] left-3 z-10 rounded-2xl p-1">
+              <div className="glass below-bar edge-l absolute z-10 rounded-2xl p-1">
                 <IconButton icon={<PanelLeftOpen size={18} />} label={t('panel.parts')} tipSide="right" onClick={() => setUI({ leftOpen: true })} />
               </div>
             )}
@@ -115,7 +128,7 @@ export default function App() {
           <button
             type="button"
             onClick={() => setUI({ mobileSheet: 'parts' })}
-            className="glass absolute bottom-[86px] left-3 z-20 flex h-11 items-center gap-2 rounded-2xl px-3.5 text-[13px] font-medium md:hidden"
+            className="glass mobile-parts-btn edge-l absolute z-20 flex h-11 items-center gap-2 rounded-2xl px-3.5 text-[13px] font-medium md:hidden"
           >
             <Shapes size={17} /> {t('panel.parts')}
           </button>
@@ -134,6 +147,8 @@ export default function App() {
       <LibraryDialog />
       <WelcomeDialog />
       <DropZone />
+      <ConfirmDialog />
+      {__ARTIFACT__ && <ExportPreview />}
       <TooltipLayer />
     </div>
   );

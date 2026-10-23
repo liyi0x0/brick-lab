@@ -47,6 +47,7 @@ import {
   type LibraryEntry,
 } from '../state/persistence';
 import { model, useStore, type Lang, type Quality, type Theme } from '../state/store';
+import { askConfirm, askText } from './ConfirmDialog';
 import { Swatch } from './PartsPanel';
 import { Button, cx, Dialog, IconButton, Kbd, keyLabel, Segmented, Switch } from './primitives';
 
@@ -249,7 +250,7 @@ export function ExportDialog() {
   const [link, setLink] = useState('');
   const [copied, setCopied] = useState(false);
   useEffect(() => {
-    if (!open) return;
+    if (!open || __ARTIFACT__) return;
     setCopied(false);
     let alive = true;
     void makeShareLink().then((l) => alive && setLink(l));
@@ -273,6 +274,7 @@ export function ExportDialog() {
   };
   return (
     <Dialog open={open} onClose={close} title={t('export.title')} icon={<Share2 size={17} />} width={640}>
+      {!__ARTIFACT__ && (
       <div className="mb-4 rounded-2xl bg-gradient-to-br from-accent-soft to-transparent p-4 ring-1 ring-line">
         <div className="mb-1 flex items-center gap-2 text-[13.5px] font-semibold">
           <Link size={16} className="text-accent" /> {t('export.share')}
@@ -296,6 +298,7 @@ export function ExportDialog() {
           </p>
         )}
       </div>
+      )}
       <div className="grid gap-2.5 sm:grid-cols-2">
         <ExportCard icon={<Image size={19} />} accent="#7c5cff" title={t('export.png')} desc={t('export.png.desc')} onClick={run(() => void exportPNG(false))} />
         <ExportCard
@@ -418,8 +421,8 @@ export function LibraryDialog() {
                 {
                   icon: <Pencil size={14} />,
                   label: t('project.rename'),
-                  fn: () => {
-                    const name = window.prompt(t('project.rename'), e.name)?.trim();
+                  fn: async () => {
+                    const name = await askText(t('project.rename'), e.name);
                     if (!name) return;
                     void renameProject(e.id, name);
                     if (e.id === currentId) useStore.getState().updateProject({ name });
@@ -430,9 +433,10 @@ export function LibraryDialog() {
                 {
                   icon: <Trash size={14} />,
                   label: t('dialog.delete'),
-                  fn: () => {
+                  fn: async () => {
                     if (e.id === currentId) return;
-                    if (window.confirm(t('library.confirmDelete', { name: e.name }))) void deleteProject(e.id);
+                    if (await askConfirm(t('library.confirmDelete', { name: e.name }), { danger: true, confirmLabel: t('dialog.delete') }))
+                      void deleteProject(e.id);
                   },
                   disabled: e.id === currentId,
                 },
@@ -443,7 +447,7 @@ export function LibraryDialog() {
                   label={a.label}
                   size="sm"
                   disabled={a.disabled}
-                  onClick={a.fn}
+                  onClick={() => void a.fn()}
                   className="!h-7 !w-7 bg-panel-solid/90 shadow-sm backdrop-blur"
                 />
               ))}

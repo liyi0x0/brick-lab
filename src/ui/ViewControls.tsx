@@ -8,7 +8,7 @@ import { IconButton } from './primitives';
 export function ViewControls() {
   const t = useT();
   return (
-    <div className="glass absolute right-3 bottom-3 z-10 hidden flex-col items-center gap-0.5 rounded-2xl p-1 md:flex">
+    <div className="glass edge-r edge-b absolute z-10 hidden flex-col items-center gap-0.5 rounded-2xl p-1 md:flex">
       <IconButton icon={<House size={17} />} label={t('view.home')} shortcut="H" tipSide="left" size="sm" onClick={() => setView('home')} />
       <IconButton icon={<ArrowDownToLine size={17} />} label={t('view.top')} shortcut="T" tipSide="left" size="sm" onClick={() => setView('top')} />
       <IconButton icon={<Box size={17} />} label={t('view.front')} tipSide="left" size="sm" onClick={() => setView('front')} />

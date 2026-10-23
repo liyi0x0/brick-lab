@@ -69,6 +69,8 @@ export interface AppState {
   toasts: Toast[];
   hover: HoverInfo | null;
   recentColors: number[];
+  /** 演示版中代替下载的预览（文本或图片） */
+  exportPreview: { file: string; text?: string; image?: string } | null;
   /** 零件缩略图图集（按当前颜色渲染） */
   thumbs: { url: string; cols: number; cell: number; index: Record<string, number> } | null;
 
@@ -137,6 +139,7 @@ export const useStore = create<AppState>((set, get) => ({
   toasts: [],
   hover: null,
   recentColors: [],
+  exportPreview: null,
   thumbs: null,
 
   setTool: (tool) => set({ tool, pasting: false }),
